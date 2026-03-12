@@ -1,0 +1,201 @@
+---
+title: 'Constants'
+description: 'Application constants and configuration values'
+icon: 'gear'
+---
+
+## Overview
+
+This module exports shared constants used throughout the application, including UI suggestions, limits, and time-based constants.
+
+---
+
+## suggestions
+
+An array of predefined suggestion objects for the chat interface. Each suggestion provides a quick-start prompt for common queries.
+
+### Type Definition
+
+```typescript
+type Suggestion = {
+  icon: LucideIcon;        // Icon component from lucide-react
+  label: string;           // Display label for the suggestion
+  prompt: string;          // The actual prompt text to send
+  info: string;            // Descriptive tooltip or info text
+};
+```
+
+### Values
+
+<ResponseField name="suggestions" type="Suggestion[]">
+  Array of 3 predefined suggestion objects:
+
+  <Expandable title="Agent Tools Suggestion">
+    <ResponseField name="icon" type="Wrench">
+      Wrench icon from lucide-react
+    </ResponseField>
+    <ResponseField name="label" type="string">
+      "Agent Tools"
+    </ResponseField>
+    <ResponseField name="prompt" type="string">
+      "What agent tools do you have?"
+    </ResponseField>
+    <ResponseField name="info" type="string">
+      "Shows information about the available agent tools."
+    </ResponseField>
+  </Expandable>
+
+  <Expandable title="Source Code Suggestion">
+    <ResponseField name="icon" type="CodeXml">
+      CodeXml icon from lucide-react
+    </ResponseField>
+    <ResponseField name="label" type="string">
+      "Source Code"
+    </ResponseField>
+    <ResponseField name="prompt" type="string">
+      "Give me a simple code example of javascript closure less than 20 lines long"
+    </ResponseField>
+    <ResponseField name="info" type="string">
+      "Shows a code example of a javascript closure."
+    </ResponseField>
+  </Expandable>
+
+  <Expandable title="Pie Chart Suggestion">
+    <ResponseField name="icon" type="BarChart">
+      BarChart icon from lucide-react
+    </ResponseField>
+    <ResponseField name="label" type="string">
+      "Pie Chart"
+    </ResponseField>
+    <ResponseField name="prompt" type="string">
+      "Create an example of pie diagram"
+    </ResponseField>
+    <ResponseField name="info" type="string">
+      "Shows an example of a pie chart diagram."
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### Usage Example
+
+```tsx
+import { suggestions } from '@/lib/constants';
+
+function SuggestionBar() {
+  return (
+    <div className="flex gap-2">
+      {suggestions.map((suggestion, index) => {
+        const Icon = suggestion.icon;
+        return (
+          <button 
+            key={index}
+            onClick={() => handlePrompt(suggestion.prompt)}
+            title={suggestion.info}
+          >
+            <Icon className="w-4 h-4" />
+            <span>{suggestion.label}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+```
+
+**Source:** `source/lib/constants.ts:3`
+
+---
+
+## LIMIT
+
+Maximum number of items or results to display. Used for pagination and list truncation.
+
+<ResponseField name="LIMIT" type="number">
+  Value: `20`
+  
+  Default limit for lists, queries, or paginated results.
+</ResponseField>
+
+### Usage Example
+
+```typescript
+import { LIMIT } from '@/lib/constants';
+
+function fetchMessages(page: number) {
+  return api.get('/messages', {
+    params: { 
+      limit: LIMIT, 
+      offset: page * LIMIT 
+    }
+  });
+}
+```
+
+**Source:** `source/lib/constants.ts:26`
+
+---
+
+## ONE_HOUR_IN_MS
+
+One hour expressed in milliseconds. Useful for time-based calculations, caching, and scheduling.
+
+<ResponseField name="ONE_HOUR_IN_MS" type="number">
+  Value: `3,600,000` (60 * 60 * 1000)
+  
+  Number of milliseconds in one hour.
+</ResponseField>
+
+### Usage Example
+
+```typescript
+import { ONE_HOUR_IN_MS } from '@/lib/constants';
+
+// Cache data for 1 hour
+const cacheExpiry = Date.now() + ONE_HOUR_IN_MS;
+
+// Set timeout for 1 hour
+setTimeout(() => {
+  refreshData();
+}, ONE_HOUR_IN_MS);
+
+// Check if timestamp is within last hour
+function isRecent(timestamp: number) {
+  return Date.now() - timestamp < ONE_HOUR_IN_MS;
+}
+```
+
+**Source:** `source/lib/constants.ts:27`
+
+---
+
+## Complete Implementation
+
+```typescript
+import { BarChart, CodeXml, Wrench } from "lucide-react";
+
+export const suggestions = [
+  {
+    icon: Wrench,
+    label: "Agent Tools",
+    prompt: "What agent tools do you have?",
+    info: "Shows information about the available agent tools.",
+  },
+  {
+    icon: CodeXml,
+    label: "Source Code",
+    prompt:
+      "Give me a simple code example of javascript closure less than 20 lines long",
+    info: "Shows a code example of a javascript closure.",
+  },
+  {
+    icon: BarChart,
+    label: "Pie Chart",
+    prompt:
+      "Create an example of pie diagram",
+    info: "Shows an example of a pie chart diagram.",
+  },
+];
+
+export const LIMIT = 20;
+export const ONE_HOUR_IN_MS = 60 * 60 * 1000;
+```

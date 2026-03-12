@@ -1,0 +1,396 @@
+---
+title: Chat UI Components
+description: Learn about the modular chat interface components built with React and Next.js
+icon: message-square
+---
+
+## Overview
+
+The ADK Utils Example features a fully-functional chat interface built with modular React components. The UI provides a seamless conversational experience with streaming responses, markdown rendering, and syntax highlighting.
+
+<CardGroup cols={2}>
+  <Card title="Streaming Support" icon="wave-pulse">
+    Real-time message streaming with typing indicators
+  </Card>
+  <Card title="Markdown Rendering" icon="markdown">
+    Rich text formatting with Streamdown library
+  </Card>
+  <Card title="Syntax Highlighting" icon="code">
+    Beautiful code blocks with Vitesse themes
+  </Card>
+  <Card title="Mermaid Diagrams" icon="diagram-project">
+    Interactive diagram rendering in chat
+  </Card>
+</CardGroup>
+
+## Component Architecture
+
+The chat interface is composed of five main components:
+
+<Steps>
+  <Step title="ChatHeader">
+    Displays agent branding, message count, and quick action suggestions
+  </Step>
+  <Step title="ChatMessage">
+    Renders individual messages with markdown and tool execution results
+  </Step>
+  <Step title="ChatInput">
+    Handles user input with auto-resize and keyboard shortcuts
+  </Step>
+  <Step title="ChatEmptyState">
+    Shows welcome message and prompt suggestions when chat is empty
+  </Step>
+  <Step title="ChatTypingIndicator">
+    Animated dots indicating agent is processing
+  </Step>
+</Steps>
+
+## ChatHeader Component
+
+The header provides navigation and quick access to common actions.
+
+```tsx components/chat-header.tsx
+"use client";
+
+import { Bot } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { suggestions } from "@/lib/constants";
+
+interface ChatHeaderProps {
+  messageCount: number;
+  onSuggestionClick: (text: string) => void;
+  onReset: () => void;
+}
+
+export function ChatHeader({
+  messageCount,
+  onSuggestionClick,
+  onReset,
+}: ChatHeaderProps) {
+  return (
+    <header className="relative flex items-center justify-between bg-blue-600 text-white px-6 py-3">
+      <button
+        type="button"
+        onClick={onReset}
+        disabled={messageCount === 0}
+        className={`flex items-center gap-3 py-1.5 rounded-lg transition-all ${
+          messageCount > 0
+            ? "hover:bg-white/20 hover:text-white cursor-pointer"
+            : "cursor-default"
+        }`}
+      >
+        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent">
+          <Bot className="h-5 w-5 text-accent-foreground" />
+        </div>
+        <div>
+          <h1 className="text-sm font-semibold">ADK Agent</h1>
+          <p className="text-xs text-muted-foreground">Powered by Ollama Cloud</p>
+        </div>
+      </button>
+
+      {messageCount > 0 && (
+        <span className="rounded-full bg-muted px-3 py-1 text-xs">
+          {messageCount} {messageCount === 1 ? "message" : "messages"}
+        </span>
+      )}
+    </header>
+  );
+}
+```
+
+<Note>
+  The header dynamically shows suggestion buttons after the first message is sent, providing contextual quick actions.
+</Note>
+
+## ChatMessage Component
+
+The message component handles rendering of both user and agent messages with full markdown support.
+
+```tsx components/chat-message.tsx
+"use client";
+
+import type { UIMessage } from "ai";
+import { Bot, User } from "lucide-react";
+import { Streamdown } from "streamdown";
+import { createCodePlugin } from "@streamdown/code";
+import { createMermaidPlugin } from "@streamdown/mermaid";
+
+const code = createCodePlugin({
+  themes: ["vitesse-light", "vitesse-dark"],
+});
+
+const mermaid = createMermaidPlugin({
+  config: {
+    startOnLoad: false,
+    theme: "base",
+    themeVariables: {
+      darkMode: true,
+      background: "#282a36",
+      primaryColor: "#44475a",
+      primaryTextColor: "#f8f8f2",
+      primaryBorderColor: "#bd93f9",
+    },
+  },
+});
+
+interface ChatMessageProps {
+  message: UIMessage;
+  isLastBotMessage?: boolean;
+}
+
+export function ChatMessage({ message, isLastBotMessage = false }: ChatMessageProps) {
+  const isUser = message.role === "user";
+
+  return (
+    <div className={`flex gap-3 ${isUser ? "flex-row-reverse" : "flex-row"}`}>
+      <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg`}>
+        {isUser ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
+      </div>
+      <div className="flex flex-col gap-1">
+        <span className="text-xs text-muted-foreground">
+          {isUser ? "You" : "Agent"}
+        </span>
+        <div className="rounded-2xl px-4 py-3 text-sm">
+          {message.parts.map((part, index) => {
+            if (part.type === "text") {
+              return (
+                <div key={index} className="streamdown-content">
+                  <Streamdown plugins={{ code, mermaid }}>
+                    {part.text}
+                  </Streamdown>
+                </div>
+              );
+            }
+            if (part.type.startsWith("tool-")) {
+              const toolName = part.type.slice(5);
+              const output = "output" in part ? part.output : null;
+
+              return (
+                <div key={index} className="mt-2 rounded-lg bg-muted px-3 py-2">
+                  <span className="font-semibold">Tool: </span>
+                  {toolName}
+                  {output && <div className="mt-1">{JSON.stringify(output, null, 2)}</div>}
+                </div>
+              );
+            }
+            return null;
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+```
+
+<Tip>
+  The `ChatMessage` component uses Streamdown with plugins for code syntax highlighting and Mermaid diagram rendering, providing rich content display capabilities.
+</Tip>
+
+## Streaming Responses
+
+Messages are rendered in real-time as they stream from the agent:
+
+```tsx app/page.tsx
+import { useChat } from "@ai-sdk/react";
+import { DefaultChatTransport } from "ai";
+
+const transport = new DefaultChatTransport({ api: "/api/genai-agent" });
+
+export default function Home() {
+  const { messages, sendMessage, status } = useChat({ transport });
+  const isLoading = status === "streaming" || status === "submitted";
+
+  return (
+    <div className="flex flex-col">
+      {messages.map((message) => (
+        <ChatMessage key={message.id} message={message} />
+      ))}
+      {isLoading && <ChatTypingIndicator />}
+    </div>
+  );
+}
+```
+
+## ChatInput Component
+
+The input component features auto-resizing textarea and keyboard shortcuts.
+
+```tsx components/chat-input.tsx
+"use client";
+
+import { ArrowRight, Home } from "lucide-react";
+import { useFocusOnLoad } from "@/hooks/use-focus-on-load";
+
+interface ChatInputProps {
+  input: string;
+  onInputChange: (value: string) => void;
+  onSubmit: () => void;
+  isLoading: boolean;
+}
+
+export function ChatInput({
+  input,
+  onInputChange,
+  onSubmit,
+  isLoading,
+}: ChatInputProps) {
+  const textareaRef = useFocusOnLoad(isLoading);
+
+  return (
+    <div className="border-t bg-card px-6 py-4">
+      <form onSubmit={(e) => { e.preventDefault(); onSubmit(); }}>
+        <textarea
+          ref={textareaRef}
+          value={input}
+          onChange={(e) => onInputChange(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              onSubmit();
+            }
+          }}
+          placeholder="Ask the agent..."
+          disabled={isLoading}
+          className="w-full resize-none rounded-xl border px-4 py-3"
+          style={{ minHeight: "48px", maxHeight: "160px" }}
+          onInput={(e) => {
+            const target = e.target as HTMLTextAreaElement;
+            target.style.height = "auto";
+            target.style.height = `${Math.min(target.scrollHeight, 160)}px`;
+          }}
+        />
+        <button type="submit" disabled={!input.trim() || isLoading}>
+          <ArrowRight className="h-4 w-4" />
+        </button>
+      </form>
+    </div>
+  );
+}
+```
+
+<Note>
+  Press Enter to send messages, Shift+Enter for new lines. The textarea automatically resizes up to 160px height.
+</Note>
+
+## ChatEmptyState Component
+
+Shows a welcoming interface with prompt suggestions when the conversation is empty.
+
+```tsx components/chat-empty-state.tsx
+"use client";
+
+import { Bot } from "lucide-react";
+import { suggestions } from "@/lib/constants";
+
+interface ChatEmptyStateProps {
+  onSuggestionClick: (text: string) => void;
+}
+
+export function ChatEmptyState({ onSuggestionClick }: ChatEmptyStateProps) {
+  return (
+    <div className="flex flex-1 flex-col items-center justify-center gap-8 px-4">
+      <div className="flex flex-col items-center gap-4">
+        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-accent/10">
+          <Bot className="h-8 w-8 text-accent" />
+        </div>
+        <h2 className="text-md text-foreground text-balance">
+          Demonstration of the @yagolopez/adk-utils npm package
+        </h2>
+      </div>
+
+      <div className="grid w-full max-w-md grid-cols-3 gap-3">
+        {suggestions.map((item) => (
+          <button
+            key={item.label}
+            onClick={() => onSuggestionClick(item.prompt)}
+            className="flex flex-col items-center gap-2 rounded-xl border p-4"
+          >
+            <item.icon className="h-5 w-5" />
+            <span className="text-xs font-medium">{item.label}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+```
+
+## ChatTypingIndicator Component
+
+A simple animated indicator shown while the agent is processing.
+
+```tsx components/chat-typing-indicator.tsx
+"use client";
+
+export function ChatTypingIndicator() {
+  return (
+    <div className="flex items-center gap-1">
+      <span className="h-2 w-2 rounded-full bg-muted-foreground animate-blink" 
+            style={{animationDelay: "0ms"}}/>
+      <span className="h-2 w-2 rounded-full bg-muted-foreground animate-blink" 
+            style={{animationDelay: "200ms"}}/>
+      <span className="h-2 w-2 rounded-full bg-muted-foreground animate-blink" 
+            style={{animationDelay: "400ms"}}/>
+    </div>
+  );
+}
+```
+
+## Markdown Rendering with Streamdown
+
+Streamdown provides real-time markdown parsing optimized for streaming content:
+
+<CardGroup cols={2}>
+  <Card title="Code Syntax Highlighting" icon="code">
+    Vitesse light/dark themes via `@streamdown/code`
+  </Card>
+  <Card title="Mermaid Diagrams" icon="diagram-project">
+    Interactive diagrams via `@streamdown/mermaid`
+  </Card>
+  <Card title="Streaming Optimized" icon="bolt">
+    Renders content as it streams in
+  </Card>
+  <Card title="Markdown Support" icon="markdown">
+    Full CommonMark specification support
+  </Card>
+</CardGroup>
+
+## Auto-Scroll Behavior
+
+The chat automatically scrolls to the bottom when new messages arrive:
+
+```tsx hooks/use-scroll-to-bottom.ts
+import { useEffect, RefObject } from "react";
+
+export function useScrollToBottom(
+  ref: RefObject<HTMLDivElement | null>,
+  deps: unknown[]
+) {
+  useEffect(() => {
+    if (ref.current) {
+      ref.current.scrollTop = ref.current.scrollHeight;
+    }
+  }, [ref, ...deps]);
+}
+```
+
+<Tip>
+  The scroll behavior triggers whenever messages or streaming status changes, ensuring the latest content is always visible.
+</Tip>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Agent Tools" icon="wrench" href="/features/agent-tools">
+    Learn about the available agent tools
+  </Card>
+  <Card title="Mermaid Diagrams" icon="diagram-project" href="/features/mermaid-diagrams">
+    Explore diagram capabilities
+  </Card>
+  <Card title="Rate Limiting" icon="shield" href="/features/rate-limiting">
+    Understand resource protection
+  </Card>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Start building your own chat app
+  </Card>
+</CardGroup>

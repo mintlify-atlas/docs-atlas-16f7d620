@@ -1,0 +1,251 @@
+---
+title: POST /api/genai-agent
+description: Main endpoint for agent communication with streaming responses
+---
+
+## Overview
+
+The `/api/genai-agent` endpoint is the primary communication interface for the ADK agent. It processes chat messages and returns streaming responses using the GenAIAgentService from `@yagolopez/adk-utils`.
+
+This endpoint handles:
+- Message validation
+- Agent initialization and execution
+- Streaming response generation
+- Error handling with appropriate HTTP status codes
+
+## Endpoint
+
+```
+POST /api/genai-agent
+```
+
+**Content-Type:** `application/json`
+
+## Request
+
+<ParamField body="messages" type="UIMessage[]" required>
+  Array of chat messages in AI SDK format. Each message should contain:
+  - `role`: "user" | "assistant" | "system"
+  - `content`: string - the message text
+  - Optional additional fields like `id`, `createdAt`, etc.
+</ParamField>
+
+### Request Schema
+
+```typescript
+interface UIMessage {
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  id?: string;
+  createdAt?: Date;
+  // Additional AI SDK message fields
+}
+
+interface RequestBody {
+  messages: UIMessage[];
+}
+```
+
+## Request Examples
+
+<CodeGroup>
+
+```typescript Fetch API
+const response = await fetch('/api/genai-agent', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    messages: [
+      {
+        role: 'user',
+        content: 'Hello! Can you help me with a task?',
+        id: 'msg-1',
+      }
+    ]
+  })
+});
+
+// Handle streaming response
+const reader = response.body?.getReader();
+const decoder = new TextDecoder();
+
+while (true) {
+  const { done, value } = await reader.read();
+  if (done) break;
+  
+  const chunk = decoder.decode(value);
+  console.log(chunk);
+}
+```
+
+```bash cURL
+curl -X POST http://localhost:3000/api/genai-agent \
+  -H "Content-Type: application/json" \
+  -d '{
+    "messages": [
+      {
+        "role": "user",
+        "content": "Hello! Can you help me with a task?"
+      }
+    ]
+  }'
+```
+
+```javascript Axios
+import axios from 'axios';
+
+const response = await axios.post('/api/genai-agent', {
+  messages: [
+    {
+      role: 'user',
+      content: 'Hello! Can you help me with a task?'
+    }
+  ]
+}, {
+  responseType: 'stream'
+});
+
+response.data.on('data', (chunk) => {
+  console.log(chunk.toString());
+});
+```
+
+</CodeGroup>
+
+## Response
+
+### Success Response (200)
+
+Returns a streaming response with AI SDK format. The response body streams the agent's reply in real-time.
+
+<ResponseField name="Response" type="ReadableStream">
+  Streaming response containing the agent's generated text in AI SDK streaming format
+</ResponseField>
+
+### Error Responses
+
+<ResponseField name="400 Bad Request" type="Error">
+  Returned when messages are missing or invalid
+  
+  ```json
+  {
+    "error": "Messages are required"
+  }
+  ```
+</ResponseField>
+
+<ResponseField name="500 Internal Server Error" type="Error">
+  Returned when an unexpected error occurs during processing
+  
+  ```json
+  {
+    "error": "Internal Server Error",
+    "details": "Error message"
+  }
+  ```
+</ResponseField>
+
+## Implementation
+
+The route handler uses the `GenAIAgentService` from `@yagolopez/adk-utils` to manage agent communication:
+
+```typescript
+import { rootAgent } from "@/app/agents/agent1";
+import { GenAIAgentService } from "@yagolopez/adk-utils";
+import { UIMessage } from "ai";
+
+export async function POST(req: Request) {
+  try {
+    // Parse incoming messages
+    const { messages }: { messages: UIMessage[] } = await req.json();
+
+    // Initialize service with root agent
+    const service = new GenAIAgentService(rootAgent);
+
+    // Validate messages
+    if (!service.validateMessages(messages)) {
+      return GenAIAgentService.createErrorResponse(
+        "Messages are required",
+        400,
+      );
+    }
+
+    // Create and return streaming response
+    return service.createStreamingResponse(messages);
+  } catch (error) {
+    console.error(error);
+    return GenAIAgentService.createErrorResponse(
+      "Internal Server Error",
+      500,
+      String(error),
+    );
+  }
+}
+```
+
+### Key Components
+
+<Card title="GenAIAgentService" icon="code">
+  The service class from `@yagolopez/adk-utils` that provides:
+  - `validateMessages()` - Validates the message array
+  - `createStreamingResponse()` - Generates streaming AI responses
+  - `createErrorResponse()` - Creates standardized error responses
+</Card>
+
+<Card title="rootAgent" icon="robot">
+  The main ADK agent instance imported from `/app/agents/agent1` that processes user messages and generates responses
+</Card>
+
+## Error Handling
+
+The endpoint implements comprehensive error handling:
+
+1. **Message Validation**: Checks if messages array is valid before processing
+2. **Try-Catch Block**: Catches any runtime errors during execution
+3. **Standardized Responses**: Uses `GenAIAgentService.createErrorResponse()` for consistent error formatting
+4. **Logging**: Errors are logged to console for debugging
+
+## Usage in Client
+
+Here's a complete example of integrating this endpoint in a React component:
+
+```typescript
+'use client';
+
+import { useChat } from 'ai/react';
+
+export default function ChatComponent() {
+  const { messages, input, handleInputChange, handleSubmit } = useChat({
+    api: '/api/genai-agent',
+  });
+
+  return (
+    <div>
+      <div>
+        {messages.map((message) => (
+          <div key={message.id}>
+            <strong>{message.role}:</strong> {message.content}
+          </div>
+        ))}
+      </div>
+      
+      <form onSubmit={handleSubmit}>
+        <input
+          value={input}
+          onChange={handleInputChange}
+          placeholder="Type your message..."
+        />
+        <button type="submit">Send</button>
+      </form>
+    </div>
+  );
+}
+```
+
+## Related
+
+- [GenAIAgentService](/api/services/genai-agent-service) - Service class documentation
+- [Agent Configuration](/guides/agent-configuration) - How to configure agents
+- [Streaming Responses](/guides/streaming) - Understanding streaming responses

@@ -1,0 +1,694 @@
+---
+title: Installation
+description: Detailed installation and configuration guide for ADK Utils Example
+---
+
+# Installation Guide
+
+This comprehensive guide covers everything you need to install, configure, and deploy the ADK Utils Example project. Whether you're setting up for local development, production deployment, or contributing to the project, this guide has you covered.
+
+## Prerequisites
+
+Before installing ADK Utils Example, ensure your system meets these requirements:
+
+### Required Software
+
+<AccordionGroup>
+  <Accordion title="Node.js 18 or Higher">
+    ADK Utils Example requires Node.js 18+ for modern JavaScript features and Next.js 16 compatibility.
+
+    **Check your version:**
+    ```bash
+    node --version
+    ```
+
+    **Install or update:**
+    - Download from [nodejs.org](https://nodejs.org)
+    - Or use a version manager:
+      ```bash
+      # Using nvm
+      nvm install 18
+      nvm use 18
+
+      # Using fnm
+      fnm install 18
+      fnm use 18
+      ```
+
+    <Tip>
+      Node.js 20 LTS is recommended for the best performance and long-term support.
+    </Tip>
+  </Accordion>
+
+  <Accordion title="Package Manager (npm, yarn, or pnpm)">
+    Choose your preferred package manager:
+
+    **npm** - Included with Node.js
+    ```bash
+    npm --version
+    ```
+
+    **yarn** - Fast, reliable package manager
+    ```bash
+    npm install -g yarn
+    yarn --version
+    ```
+
+    **pnpm** - Efficient disk space usage
+    ```bash
+    npm install -g pnpm
+    pnpm --version
+    ```
+
+    <Note>
+      This guide uses npm in examples, but all commands work with yarn/pnpm equivalents.
+    </Note>
+  </Accordion>
+
+  <Accordion title="Git Version Control">
+    Required for cloning the repository and managing source control.
+
+    ```bash
+    git --version
+    ```
+
+    Install from [git-scm.com](https://git-scm.com) if needed.
+  </Accordion>
+</AccordionGroup>
+
+### Optional but Recommended
+
+<CardGroup cols={2}>
+  <Card title="Ollama" icon="server" href="https://ollama.com">
+    For running AI models locally without cloud dependencies
+  </Card>
+  <Card title="Visual Studio Code" icon="code" href="https://code.visualstudio.com">
+    Recommended IDE with excellent TypeScript support
+  </Card>
+  <Card title="Gemini API Key" icon="key" href="https://ai.google.dev">
+    For using Google's Gemini models instead of Ollama
+  </Card>
+  <Card title="Docker" icon="docker" href="https://docker.com">
+    For containerized deployment (optional)
+  </Card>
+</CardGroup>
+
+## Installation Steps
+
+<Steps>
+  <Step title="Clone the Repository">
+    Clone the ADK Utils Example repository from GitHub:
+
+    ```bash
+    git clone https://github.com/YagoLopez/adk-utils-example.git
+    cd adk-utils-example
+    ```
+
+    **Alternative: Use GitHub CLI**
+    ```bash
+    gh repo clone YagoLopez/adk-utils-example
+    cd adk-utils-example
+    ```
+
+    **Alternative: Download ZIP**
+    - Visit [github.com/YagoLopez/adk-utils-example](https://github.com/YagoLopez/adk-utils-example)
+    - Click "Code" → "Download ZIP"
+    - Extract and navigate to the directory
+  </Step>
+
+  <Step title="Install Dependencies">
+    Install all required packages:
+
+    <CodeGroup>
+    ```bash npm
+    npm install
+    ```
+
+    ```bash yarn
+    yarn install
+    ```
+
+    ```bash pnpm
+    pnpm install
+    ```
+    </CodeGroup>
+
+    This installs:
+    - **Framework**: Next.js 16.1.6, React 19.2.4
+    - **AI Core**: @google/adk, @yagolopez/adk-utils, ai SDK
+    - **UI Libraries**: Tailwind CSS 4, Radix UI, Lucide React
+    - **Dev Tools**: TypeScript 5, ESLint, Prettier, Jest
+
+    <Tip>
+      The installation creates a `node_modules` directory (~200MB) and may take 2-3 minutes.
+    </Tip>
+  </Step>
+
+  <Step title="Verify Installation">
+    Confirm all packages installed successfully:
+
+    ```bash
+    npm list --depth=0
+    ```
+
+    You should see all major dependencies:
+    ```
+    adk-utils-example@0.1.0
+    ├── @google/adk@0.3.0
+    ├── @yagolopez/adk-utils@0.2.5
+    ├── next@16.1.6
+    ├── react@19.2.4
+    └── ...
+    ```
+
+    Check for vulnerabilities:
+    ```bash
+    npm audit
+    ```
+  </Step>
+</Steps>
+
+## Environment Configuration
+
+While the project works out-of-the-box with Ollama's cloud endpoint, you may want to configure environment variables for different models or settings.
+
+### Using Ollama (Default)
+
+The default configuration in `app/agents/agent1.ts:67` uses Ollama's cloud endpoint:
+
+```typescript app/agents/agent1.ts
+import { OllamaModel } from "@yagolopez/adk-utils";
+
+export const rootAgent = new LlmAgent({
+  model: new OllamaModel("gpt-oss:120b-cloud", "https://ollama.com"),
+  // ... rest of configuration
+});
+```
+
+**No environment variables needed** for cloud Ollama.
+
+### Using Local Ollama
+
+For local AI inference with privacy and zero latency:
+
+<Steps>
+  <Step title="Install Ollama">
+    Download and install from [ollama.com](https://ollama.com):
+
+    <CodeGroup>
+    ```bash macOS
+    brew install ollama
+    ```
+
+    ```bash Linux
+    curl -fsSL https://ollama.com/install.sh | sh
+    ```
+
+    ```bash Windows
+    # Download installer from ollama.com
+    ```
+    </CodeGroup>
+  </Step>
+
+  <Step title="Pull a Model">
+    Download a model for local inference:
+
+    ```bash
+    # Lightweight model (recommended for testing)
+    ollama pull qwen3:0.6b
+
+    # Alternative models
+    ollama pull llama2
+    ollama pull mistral
+    ollama pull codellama
+    ```
+
+    <Note>
+      Model sizes vary from 400MB (qwen3:0.6b) to 7GB+ (llama2). Choose based on your hardware.
+    </Note>
+  </Step>
+
+  <Step title="Start Ollama Server">
+    Run the Ollama service:
+
+    ```bash
+    ollama serve
+    ```
+
+    Verify it's running:
+    ```bash
+    curl http://localhost:11434/api/version
+    ```
+  </Step>
+
+  <Step title="Update Agent Configuration">
+    Modify `app/agents/agent1.ts:67` to use local Ollama:
+
+    ```typescript app/agents/agent1.ts
+    export const rootAgent = new LlmAgent({
+      model: new OllamaModel("qwen3:0.6b", "http://localhost:11434"),
+      // ... rest of configuration
+    });
+    ```
+  </Step>
+</Steps>
+
+### Using Google Gemini
+
+To use Google's Gemini models instead of Ollama:
+
+<Steps>
+  <Step title="Get API Key">
+    1. Visit [Google AI Studio](https://ai.google.dev)
+    2. Sign in with your Google account
+    3. Create a new API key
+    4. Copy the key (starts with `AIza...`)
+  </Step>
+
+  <Step title="Create Environment File">
+    Create a `.env.local` file in the project root:
+
+    ```bash
+    touch .env.local
+    ```
+
+    Add your Gemini API key:
+
+    ```bash .env.local
+    GOOGLE_GENERATIVE_AI_API_KEY=your_api_key_here
+    ```
+
+    <Warning>
+      Never commit `.env.local` to version control. It's already in `.gitignore`.
+    </Warning>
+  </Step>
+
+  <Step title="Update Agent Configuration">
+    Modify `app/agents/agent1.ts:62` to use Gemini:
+
+    ```typescript app/agents/agent1.ts
+    export const rootAgent = new LlmAgent({
+      model: 'gemini-2.5-flash',
+      // ... rest of configuration
+    });
+    ```
+
+    Available Gemini models:
+    - `gemini-2.5-flash` - Fast, cost-effective
+    - `gemini-2.5-pro` - Advanced reasoning
+    - `gemini-1.5-flash` - Previous generation
+  </Step>
+</Steps>
+
+## Configuration Options
+
+### Agent Configuration
+
+Customize your agent in `app/agents/agent1.ts`:
+
+```typescript app/agents/agent1.ts
+export const rootAgent = new LlmAgent({
+  name: "agent1",
+  model: new OllamaModel("qwen3:0.6b", "http://localhost:11434"),
+  description: "Agent with three function tools...",
+  instruction: `You are a helpful assistant.
+                If the user asks for the time, use 'get_current_time'.
+                If the user asks for a diagram, use 'create_mermaid_diagram'.
+                If the user asks to view source code, use 'view_source_code'.`,
+  tools: [getCurrentTime, createMermaidDiagram, viewSourceCode],
+});
+```
+
+**Configurable Options:**
+- `name` - Agent identifier
+- `model` - AI model (Gemini string or OllamaModel instance)
+- `description` - Agent purpose and capabilities
+- `instruction` - System prompt and behavior guidelines
+- `tools` - Array of FunctionTool instances
+
+### Rate Limiting
+
+Adjust rate limits in `lib/constants.ts:26`:
+
+```typescript lib/constants.ts
+export const LIMIT = 20; // Messages per window
+export const ONE_HOUR_IN_MS = 60 * 60 * 1000; // Time window
+```
+
+**Modify for your needs:**
+- Development: Set `LIMIT` to 100 or higher
+- Production: Keep at 20-50 based on your API quotas
+- No limit: Remove rate limiting from `app/page.tsx:29`
+
+### Custom Tools
+
+Add your own function tools in `app/agents/agent1.ts`:
+
+```typescript
+import { FunctionTool } from "@google/adk";
+import { z } from "zod";
+
+const myCustomTool = new FunctionTool({
+  name: "my_tool",
+  description: "Description of what this tool does",
+  parameters: z.object({
+    param1: z.string().describe("Parameter description"),
+    param2: z.number().optional(),
+  }),
+  execute: async ({ param1, param2 }) => {
+    // Your tool logic here
+    return {
+      status: "success",
+      report: `Result: ${param1}`,
+    };
+  },
+});
+
+// Add to agent tools array
+export const rootAgent = new LlmAgent({
+  // ... other config
+  tools: [getCurrentTime, createMermaidDiagram, viewSourceCode, myCustomTool],
+});
+```
+
+<Tip>
+  Use Zod schemas for type-safe parameter validation. The ADK automatically validates inputs before calling your tool.
+</Tip>
+
+## Development Workflow
+
+### Available Scripts
+
+The project includes several npm scripts defined in `package.json:26`:
+
+<CodeGroup>
+```bash Development Server
+# Start Next.js dev server with HMR
+npm run dev
+# Runs on http://localhost:3000
+```
+
+```bash Build for Production
+# Create optimized production build
+npm run build
+# Generates .next directory
+```
+
+```bash Start Production Server
+# Run production build
+npm run start
+# Must run 'npm run build' first
+```
+
+```bash Linting
+# Check code quality with ESLint
+npm run lint
+# Auto-fix issues: npm run lint -- --fix
+```
+
+```bash Testing
+# Run Jest unit tests
+npm run test
+
+# Watch mode
+npm run test:watch
+
+# Generate coverage report
+npm run test:coverage
+```
+
+```bash E2E Testing
+# Run Playwright tests
+npm run test:e2e:headless
+
+# Headed mode (visible browser)
+npm run test:e2e:headed
+
+# Interactive UI mode
+npm run test:e2e:ui
+```
+
+```bash ADK Web Tool
+# Launch ADK dev tools
+npm run adk:web
+# Opens agent inspector UI
+```
+</CodeGroup>
+
+### Development Tips
+
+<AccordionGroup>
+  <Accordion title="Hot Module Replacement">
+    Next.js automatically reloads your application when you save changes. No need to restart the server for:
+    - Component changes
+    - Style updates
+    - API route modifications
+
+    **Restart required for:**
+    - Changes to `next.config.ts`
+    - Environment variable updates
+    - Package installations
+  </Accordion>
+
+  <Accordion title="TypeScript Type Checking">
+    Run TypeScript compiler in watch mode:
+    ```bash
+    npx tsc --noEmit --watch
+    ```
+
+    This catches type errors without building.
+  </Accordion>
+
+  <Accordion title="Debugging">
+    Add breakpoints in VS Code:
+    1. Add a `.vscode/launch.json` file
+    2. Set breakpoints in your code
+    3. Press F5 to start debugging
+
+    Or use Chrome DevTools:
+    ```bash
+    NODE_OPTIONS='--inspect' npm run dev
+    ```
+    Then open `chrome://inspect`
+  </Accordion>
+
+  <Accordion title="Environment Variables">
+    Next.js supports multiple env files:
+    - `.env.local` - Local development (not committed)
+    - `.env.development` - Development defaults
+    - `.env.production` - Production settings
+
+    Load order: `.env.local` > `.env.development` > `.env`
+  </Accordion>
+</AccordionGroup>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Port Already in Use">
+    **Error:** `Port 3000 is already in use`
+
+    **Solutions:**
+    ```bash
+    # Use a different port
+    PORT=3001 npm run dev
+
+    # Kill process on port 3000 (macOS/Linux)
+    lsof -ti:3000 | xargs kill -9
+
+    # Kill process on port 3000 (Windows)
+    netstat -ano | findstr :3000
+    taskkill /PID <PID> /F
+    ```
+  </Accordion>
+
+  <Accordion title="Module Resolution Errors">
+    **Error:** `Cannot find module '@/components/...'`
+
+    **Solutions:**
+    1. Check `tsconfig.json` has correct path mapping
+    2. Restart TypeScript server in VS Code (Cmd+Shift+P → "Restart TS Server")
+    3. Clear Next.js cache:
+       ```bash
+       rm -rf .next
+       npm run dev
+       ```
+  </Accordion>
+
+  <Accordion title="Ollama Connection Failed">
+    **Error:** `Failed to connect to Ollama at http://localhost:11434`
+
+    **Diagnosis:**
+    ```bash
+    # Check if Ollama is running
+    curl http://localhost:11434/api/version
+
+    # Check if model is available
+    ollama list
+    ```
+
+    **Solutions:**
+    1. Start Ollama: `ollama serve`
+    2. Pull the model: `ollama pull qwen3:0.6b`
+    3. Check firewall isn't blocking port 11434
+    4. Try cloud endpoint instead:
+       ```typescript
+       model: new OllamaModel("gpt-oss:120b-cloud", "https://ollama.com")
+       ```
+  </Accordion>
+
+  <Accordion title="Gemini API Errors">
+    **Error:** `API key not valid`
+
+    **Solutions:**
+    1. Verify `.env.local` exists and has correct key
+    2. Restart dev server after adding env vars
+    3. Check key at [AI Studio](https://ai.google.dev)
+    4. Ensure billing is enabled for your Google Cloud project
+
+    **Error:** `Quota exceeded`
+    - You've hit the free tier limit
+    - Upgrade to paid plan or switch to Ollama
+  </Accordion>
+
+  <Accordion title="Build Errors">
+    **Error:** Type errors during build
+
+    **Solutions:**
+    ```bash
+    # Check for type errors
+    npx tsc --noEmit
+
+    # Update dependencies
+    npm update
+
+    # Clear cache and rebuild
+    rm -rf .next node_modules
+    npm install
+    npm run build
+    ```
+  </Accordion>
+
+  <Accordion title="Rate Limit Issues">
+    **Error:** `Rate limit exceeded` alert
+
+    **Solutions:**
+    1. Wait for the rate limit window to reset (1 hour by default)
+    2. Increase limit in `lib/constants.ts:26`
+    3. Clear browser local storage to reset client-side counter
+    4. For development, disable rate limiting in `app/page.tsx:29`
+  </Accordion>
+
+  <Accordion title="Dependencies Out of Date">
+    **Check for updates:**
+    ```bash
+    npm outdated
+    ```
+
+    **Update safely:**
+    ```bash
+    # Update patch versions only
+    npm update
+
+    # Update to latest (may break)
+    npm install @google/adk@latest
+    npm install next@latest
+    ```
+
+    <Warning>
+      Major version updates may introduce breaking changes. Always check release notes.
+    </Warning>
+  </Accordion>
+</AccordionGroup>
+
+## Production Deployment
+
+### Build and Deploy
+
+<Steps>
+  <Step title="Create Production Build">
+    ```bash
+    npm run build
+    ```
+
+    This creates an optimized `.next` directory with:
+    - Minified JavaScript and CSS
+    - Optimized images
+    - Static and server-side pages
+  </Step>
+
+  <Step title="Test Production Build Locally">
+    ```bash
+    npm run start
+    ```
+
+    Visit http://localhost:3000 to verify everything works.
+  </Step>
+
+  <Step title="Deploy to Vercel (Recommended)">
+    Vercel is optimized for Next.js:
+
+    ```bash
+    # Install Vercel CLI
+    npm install -g vercel
+
+    # Deploy
+    vercel
+    ```
+
+    Or connect your GitHub repository to Vercel for automatic deployments.
+
+    **Add environment variables in Vercel Dashboard:**
+    - `GOOGLE_GENERATIVE_AI_API_KEY` (if using Gemini)
+  </Step>
+</Steps>
+
+### Alternative Deployment Options
+
+<CardGroup cols={2}>
+  <Card title="Netlify" icon="netlify" href="https://netlify.com">
+    Supports Next.js with automatic deployments
+  </Card>
+  <Card title="Railway" icon="train" href="https://railway.app">
+    Simple deployment with built-in databases
+  </Card>
+  <Card title="AWS Amplify" icon="aws" href="https://aws.amazon.com/amplify">
+    Full AWS integration and scaling
+  </Card>
+  <Card title="Testing" icon="flask" href="/development/testing">
+    Run tests for your application
+  </Card>
+</CardGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Architecture Overview" icon="diagram-project" href="/architecture/project-structure">
+    Understand how components interact
+  </Card>
+  <Card title="Agent Tools" icon="robot" href="/features/agent-tools">
+    Learn about built-in agent tools
+  </Card>
+  <Card title="API Reference" icon="code" href="/api/agents/root-agent">
+    Explore available APIs and utilities
+  </Card>
+  <Card title="Configuration" icon="gear" href="/development/configuration">
+    Configure your application
+  </Card>
+</CardGroup>
+
+## Getting Help
+
+If you encounter issues not covered in this guide:
+
+1. **Check GitHub Issues**: [github.com/YagoLopez/adk-utils-example/issues](https://github.com/YagoLopez/adk-utils-example/issues)
+2. **Create a New Issue**: Include error messages, configuration, and steps to reproduce
+3. **Join Discussions**: Share your use case and get community help
+4. **Review Documentation**: 
+   - [Next.js Docs](https://nextjs.org/docs)
+   - [Google ADK Docs](https://github.com/google/adk)
+   - [ADK Utils Package](https://www.npmjs.com/package/@yagolopez/adk-utils)
+
+<Tip>
+  When reporting issues, include your Node.js version (`node --version`), package manager, and any relevant error logs.
+</Tip>

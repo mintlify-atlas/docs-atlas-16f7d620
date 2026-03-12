@@ -1,0 +1,406 @@
+---
+title: Testing
+description: Comprehensive testing guide for unit tests and end-to-end tests
+icon: 'flask'
+---
+
+## Testing Overview
+
+The ADK Utils Example includes two types of tests:
+
+- **Unit Tests**: Using Jest for testing individual functions and utilities
+- **End-to-End Tests**: Using Playwright for testing the full application flow
+
+## Unit Testing with Jest
+
+### Running Unit Tests
+
+The project uses Jest for unit testing. All test scripts are defined in `package.json`:
+
+<CodeGroup>
+```bash npm
+# Run tests once
+npm test
+
+# Watch mode - reruns tests on file changes
+npm run test:watch
+
+# Generate coverage report
+npm run test:coverage
+```
+
+```bash yarn
+# Run tests once
+yarn test
+
+# Watch mode
+yarn test:watch
+
+# Generate coverage report
+yarn test:coverage
+```
+
+```bash pnpm
+# Run tests once
+pnpm test
+
+# Watch mode
+pnpm test:watch
+
+# Generate coverage report
+pnpm test:coverage
+```
+</CodeGroup>
+
+### Available Test Scripts
+
+```json package.json
+{
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watchAll",
+    "test:coverage": "jest --coverage"
+  }
+}
+```
+
+| Script | Description |
+|--------|-------------|
+| `test` | Runs all unit tests once |
+| `test:watch` | Runs tests in watch mode, re-running on file changes |
+| `test:coverage` | Generates a code coverage report |
+
+### Jest Configuration
+
+The project uses `ts-jest` for TypeScript support:
+
+```json Key Dependencies
+{
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "jest": "^30.2.0",
+    "ts-jest": "^29.4.6"
+  }
+}
+```
+
+<Note>
+Jest is configured to work seamlessly with TypeScript through the `ts-jest` preset.
+</Note>
+
+### Writing Unit Tests
+
+Create test files with the `.test.ts` or `.spec.ts` extension:
+
+```typescript Example: utils.test.ts
+import { describe, it, expect } from '@jest/globals';
+
+describe('Utility Functions', () => {
+  it('should process data correctly', () => {
+    const result = processData('input');
+    expect(result).toBe('expected output');
+  });
+});
+```
+
+## End-to-End Testing with Playwright
+
+### Overview
+
+Playwright tests simulate real user interactions in a browser environment. The test suite includes:
+
+- Home page functionality tests
+- Chat interaction tests with mock agents
+- API route mocking
+
+### Running E2E Tests
+
+<Tabs>
+  <Tab title="Headless Mode">
+    Run tests in headless mode (no visible browser):
+
+    <CodeGroup>
+    ```bash npm
+    npm run test:e2e:headless
+    ```
+
+    ```bash yarn
+    yarn test:e2e:headless
+    ```
+
+    ```bash pnpm
+    pnpm test:e2e:headless
+    ```
+    </CodeGroup>
+
+    This runs tests with the `--reporter=list` flag for detailed output.
+  </Tab>
+
+  <Tab title="Headed Mode">
+    Run tests with visible browser windows:
+
+    <CodeGroup>
+    ```bash npm
+    npm run test:e2e:headed
+    ```
+
+    ```bash yarn
+    yarn test:e2e:headed
+    ```
+
+    ```bash pnpm
+    pnpm test:e2e:headed
+    ```
+    </CodeGroup>
+
+    Useful for debugging test failures by watching the browser interactions.
+  </Tab>
+
+  <Tab title="UI Mode">
+    Run tests with Playwright's interactive UI:
+
+    <CodeGroup>
+    ```bash npm
+    npm run test:e2e:ui
+    ```
+
+    ```bash yarn
+    yarn test:e2e:ui
+    ```
+
+    ```bash pnpm
+    pnpm test:e2e:ui
+    ```
+    </CodeGroup>
+
+    Provides a GUI for running, debugging, and inspecting tests.
+  </Tab>
+</Tabs>
+
+### E2E Test Scripts
+
+```json package.json
+{
+  "scripts": {
+    "test:e2e:headless": "playwright test --reporter=list",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:ui": "playwright test --ui"
+  }
+}
+```
+
+### Playwright Configuration
+
+The `playwright.config.ts` file defines the test configuration:
+
+```typescript playwright.config.ts
+import { defineConfig, devices } from "@playwright/test";
+
+const PORT = process.env.PORT || 3000;
+const baseURL = `http://localhost:${PORT}`;
+
+export default defineConfig({
+  testDir: "./e2e",
+  fullyParallel: true,
+  forbidOnly: !!process.env.CI,
+  retries: process.env.CI ? 2 : 0,
+  workers: process.env.CI ? 3 : undefined,
+  reporter: "html",
+  use: {
+    baseURL,
+    trace: "on-first-retry",
+  },
+  projects: [
+    {
+      name: "chromium",
+      use: { ...devices["Desktop Chrome"] },
+    },
+  ],
+  webServer: {
+    command: process.env.CI ? "npm run start" : "npm run dev",
+    url: baseURL,
+    reuseExistingServer: !process.env.CI,
+  },
+});
+```
+
+### Key Configuration Options
+
+| Option | Value | Description |
+|--------|-------|-------------|
+| `testDir` | `./e2e` | Directory containing test files |
+| `fullyParallel` | `true` | Run tests in parallel for faster execution |
+| `retries` | `2` (CI only) | Retry failed tests in CI environments |
+| `workers` | `3` (CI only) | Number of parallel workers |
+| `reporter` | `html` | Generate HTML test reports |
+| `baseURL` | `http://localhost:3000` | Base URL for test navigation |
+
+<Note>
+Playwright automatically starts the dev server before running tests using the `webServer` configuration.
+</Note>
+
+## Example Tests
+
+### Home Page Test
+
+```typescript e2e/home.spec.ts
+import { test, expect } from "@playwright/test";
+
+test("has title", async ({ page }) => {
+  await page.goto("/");
+
+  // Expect a title "to contain" a substring.
+  await expect(page).toHaveTitle(/ADK Agent Chat/);
+});
+
+test("displays main content", async ({ page }) => {
+  await page.goto("/");
+
+  // Check for the main landmark
+  await expect(page.getByRole("main")).toBeVisible();
+});
+```
+
+### Chat Functionality Test
+
+This test demonstrates how to mock the ADK agent for testing:
+
+```typescript e2e/chat.spec.ts
+import { test, expect } from "@playwright/test";
+import { MockModel, GenAIAgentService } from "@yagolopez/adk-utils";
+import { LlmAgent } from "@google/adk";
+
+test.describe("Chat Functionality", () => {
+  test("user can send a message and receive a response", async ({ page }) => {
+    // Create agent with mock model
+    const agent = new LlmAgent({
+      name: "test_agent",
+      description: "test-description",
+      model: new MockModel("mock-model", 0, ["Response from mock model"]),
+      instruction: "You are a test agent.",
+    });
+    const service = new GenAIAgentService(agent);
+
+    // Mock the API route
+    await page.route("/api/genai-agent", async (route) => {
+      const { messages } = route.request().postDataJSON();
+      const response = service.createStreamingResponse(messages);
+      const bodyBuffer = await response.arrayBuffer();
+
+      await route.fulfill({
+        status: response.status,
+        headers: Object.fromEntries(response.headers.entries()),
+        contentType:
+          response.headers.get("content-type") || "text/event-stream",
+        body: Buffer.from(bodyBuffer),
+      });
+    });
+
+    await page.goto("/");
+
+    const input = page.getByPlaceholder("Ask the agent...");
+    await input.fill("hola");
+
+    const sendButton = page.getByRole("button", { name: "Send message" });
+    await sendButton.click();
+
+    await expect(page.getByText("Response from mock model")).toBeVisible();
+  });
+});
+```
+
+### Key Testing Features
+
+<Steps>
+  <Step title="Mock Model">
+    Uses `MockModel` from `@yagolopez/adk-utils` to create a test agent without calling real AI models.
+  </Step>
+
+  <Step title="API Route Mocking">
+    Intercepts API requests with `page.route()` to test without external dependencies.
+  </Step>
+
+  <Step title="User Interaction Simulation">
+    Simulates real user actions like filling input fields and clicking buttons.
+  </Step>
+
+  <Step title="Response Validation">
+    Verifies that the mocked response appears correctly in the UI.
+  </Step>
+</Steps>
+
+## Test Dependencies
+
+```json devDependencies
+{
+  "@playwright/test": "^1.58.2",
+  "@types/jest": "^30.0.0",
+  "jest": "^30.2.0",
+  "ts-jest": "^29.4.6",
+  "ts-node": "^10.9.2"
+}
+```
+
+## CI/CD Integration
+
+The test configuration includes CI-specific optimizations:
+
+```typescript CI Configuration
+{
+  forbidOnly: !!process.env.CI,     // Fail if test.only is found
+  retries: process.env.CI ? 2 : 0,  // Retry failed tests in CI
+  workers: process.env.CI ? 3 : undefined, // Parallel workers
+}
+```
+
+<Warning>
+In CI environments, the production build (`npm run start`) is used instead of the dev server for more accurate testing.
+</Warning>
+
+## Best Practices
+
+### Unit Testing
+
+- **Test Pure Functions**: Focus on functions with predictable outputs
+- **Mock External Dependencies**: Use Jest mocks for API calls and external services
+- **Coverage Goals**: Aim for high coverage on critical business logic
+
+### E2E Testing
+
+- **Use Mock Models**: Avoid calling real AI APIs in tests for speed and reliability
+- **Test User Flows**: Focus on complete user journeys through the application
+- **Parallel Execution**: Take advantage of Playwright's parallel test execution
+- **Trace on Failure**: Use `trace: "on-first-retry"` to debug failing tests
+
+## Debugging Tests
+
+### Jest Debugging
+
+```bash
+# Run tests in watch mode with verbose output
+npm run test:watch -- --verbose
+```
+
+### Playwright Debugging
+
+```bash
+# Open UI mode for interactive debugging
+npm run test:e2e:ui
+
+# Run with headed browser to see what's happening
+npm run test:e2e:headed
+
+# Enable debug mode
+DEBUG=pw:api npm run test:e2e:headless
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Running Locally" icon="play" href="/development/running-locally">
+    Set up your development environment
+  </Card>
+  <Card title="Configuration" icon="gear" href="/development/configuration">
+    Configure environment variables and settings
+  </Card>
+</CardGroup>

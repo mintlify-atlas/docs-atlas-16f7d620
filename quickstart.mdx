@@ -1,80 +1,327 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: Quickstart
+description: Get your AI chat application running in under 5 minutes
 ---
 
-## Get started in three steps
+# Quickstart Guide
 
-Get your documentation site running locally and make your first customization.
-
-### Step 1: Set up your local environment
-
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
-    
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
-
-### Step 2: Deploy your changes
-
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
-
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
-
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
-
-### Step 3: Go live
-
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
-
-## Next steps
-
-Now that you have your docs running, explore these key features:
-
-<CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
-</CardGroup>
+Get the ADK Utils Example chat application up and running in **less than 5 minutes**. This guide will walk you through cloning the repository, installing dependencies, and starting your first AI conversation.
 
 <Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
+  This quickstart uses the Ollama model for local AI inference. You can switch to Gemini by following the configuration steps in the [Installation](/installation) guide.
 </Note>
+
+## Prerequisites
+
+Before you begin, ensure you have:
+
+- **Node.js 18+** installed on your system
+- **npm**, **yarn**, or **pnpm** package manager
+- (Optional) **Ollama** installed for local model support
+
+<Warning>
+  If you plan to use Google's Gemini models, you'll need a Gemini API key. See the [Installation](/installation) guide for detailed setup.
+</Warning>
+
+## Step-by-Step Setup
+
+<Steps>
+  <Step title="Clone the Repository">
+    First, clone the ADK Utils Example repository to your local machine:
+
+    ```bash
+    git clone https://github.com/YagoLopez/adk-utils-example.git
+    cd adk-utils-example
+    ```
+
+    This will download the complete project with all source code, components, and configuration files.
+  </Step>
+
+  <Step title="Install Dependencies">
+    Install all required packages using your preferred package manager:
+
+    <CodeGroup>
+    ```bash npm
+    npm install
+    ```
+
+    ```bash yarn
+    yarn install
+    ```
+
+    ```bash pnpm
+    pnpm install
+    ```
+    </CodeGroup>
+
+    This will install all dependencies including:
+    - Next.js 16 and React 19
+    - Google ADK and ADK Utils
+    - AI SDK and related packages
+    - UI components and styling libraries
+
+    <Tip>
+      The installation might take a few minutes depending on your internet connection.
+    </Tip>
+  </Step>
+
+  <Step title="Configure the Agent Model">
+    The project comes pre-configured with an Ollama model. Open `app/agents/agent1.ts` to see the agent configuration:
+
+    ```typescript app/agents/agent1.ts
+    import { LlmAgent } from "@google/adk";
+    import { OllamaModel } from "@yagolopez/adk-utils";
+
+    export const rootAgent = new LlmAgent({
+      name: "agent1",
+      // Choose your model:
+      // model: 'gemini-2.5-flash',  // For Gemini (requires API key)
+      model: new OllamaModel("gpt-oss:120b-cloud", "https://ollama.com"),
+      description: "Agent with function tools for time, diagrams, and code",
+      instruction: `You are a helpful assistant...`,
+      tools: [getCurrentTime, createMermaidDiagram, viewSourceCode],
+    });
+    ```
+
+    The default configuration uses Ollama's cloud endpoint. For local models, change to:
+
+    ```typescript
+    model: new OllamaModel("qwen3:0.6b", "http://localhost:11434")
+    ```
+
+    <Note>
+      Make sure Ollama is running locally if you use `http://localhost:11434`. Install Ollama from [ollama.com](https://ollama.com) and run `ollama pull qwen3:0.6b`.
+    </Note>
+  </Step>
+
+  <Step title="Start the Development Server">
+    Launch the Next.js development server:
+
+    <CodeGroup>
+    ```bash npm
+    npm run dev
+    ```
+
+    ```bash yarn
+    yarn dev
+    ```
+
+    ```bash pnpm
+    pnpm dev
+    ```
+    </CodeGroup>
+
+    You should see output similar to:
+
+    ```bash
+    ▲ Next.js 16.1.6
+    - Local:        http://localhost:3000
+    - Network:      http://192.168.1.100:3000
+
+    ✓ Ready in 2.3s
+    ```
+
+    <Tip>
+      The development server includes hot module replacement (HMR), so your changes will be reflected immediately.
+    </Tip>
+  </Step>
+
+  <Step title="Open the Application">
+    Navigate to [http://localhost:3000](http://localhost:3000) in your web browser.
+
+    You should see the chat interface with:
+    - A clean, modern UI
+    - Three suggested prompts:
+      - "What agent tools do you have?"
+      - "Give me a simple code example of javascript closure"
+      - "Create an example of pie diagram"
+    - A chat input ready for your messages
+
+    ![Chat Interface Empty State](/images/chat-empty-state.png)
+  </Step>
+
+  <Step title="Test the Chat Interface">
+    Try one of the suggested prompts or type your own message. For example:
+
+    **Try this:** "What agent tools do you have?"
+
+    The agent will respond with information about its three built-in tools:
+    - `get_current_time` - Time retrieval for any city
+    - `create_mermaid_diagram` - Visual diagram generation
+    - `view_source_code` - Source code visualization
+
+    **Try this:** "Create a flowchart showing a user login process"
+
+    The agent will use the `create_mermaid_diagram` tool to generate an interactive Mermaid.js diagram:
+
+    ```mermaid
+    flowchart TD
+        A[User Visits Login Page] --> B{Credentials Valid?}
+        B -->|Yes| C[Redirect to Dashboard]
+        B -->|No| D[Show Error Message]
+        D --> A
+    ```
+
+    **Try this:** "What time is it in Tokyo?"
+
+    The agent will call the `get_current_time` tool to retrieve the time.
+  </Step>
+</Steps>
+
+## What's Running?
+
+Once your development server is running, here's what's happening:
+
+<AccordionGroup>
+  <Accordion title="Frontend (Next.js App)">
+    The React application running at `http://localhost:3000` includes:
+    - Chat UI components with real-time streaming
+    - Markdown and Mermaid rendering
+    - Rate limiting (20 messages per hour by default)
+    - Auto-scrolling message list
+  </Accordion>
+
+  <Accordion title="API Routes">
+    The Next.js API route at `/api/genai-agent` handles:
+    - Message processing from the frontend
+    - Agent initialization with `GenAIAgentService`
+    - Streaming responses back to the client
+    - Error handling and validation
+
+    Located in: `app/api/genai-agent/route.ts:1`
+  </Accordion>
+
+  <Accordion title="AI Agent">
+    The `rootAgent` defined in `app/agents/agent1.ts:62` includes:
+    - Ollama model integration via `@yagolopez/adk-utils`
+    - Three custom function tools
+    - Zod schemas for parameter validation
+    - Custom instructions for behavior
+  </Accordion>
+</AccordionGroup>
+
+## Expected Output
+
+When you send your first message, you should see:
+
+1. **Typing Indicator** - Shows the agent is processing
+2. **Streaming Response** - Text appears word by word in real-time
+3. **Formatted Output** - Markdown rendering with:
+   - Code blocks with syntax highlighting
+   - Mermaid diagrams (if requested)
+   - Proper text formatting (bold, italic, lists)
+4. **Tool Calls** - Visual feedback when tools are executed
+
+## Explore the ADK Web Tool
+
+The project includes the ADK Web Tool for debugging and inspecting agents:
+
+```bash
+npm run adk:web
+```
+
+This launches an interactive web interface where you can:
+- Inspect agent configurations
+- View tool definitions
+- Test agent interactions
+- Debug tool calls and responses
+
+<Tip>
+  The ADK Web Tool runs on a different port (typically 3001) and provides a development-focused interface for agent management.
+</Tip>
+
+## Verify Installation
+
+To ensure everything is working correctly:
+
+<Steps>
+  <Step title="Check the Console">
+    Open your browser's developer console (F12). You should see no errors, only informational logs.
+  </Step>
+
+  <Step title="Send a Test Message">
+    Type "Hello" and press Enter. You should receive a response within 1-2 seconds.
+  </Step>
+
+  <Step title="Test Tool Execution">
+    Ask for a diagram: "Create a simple pie chart". Verify that the Mermaid diagram renders correctly.
+  </Step>
+
+  <Step title="Check Rate Limiting">
+    The app limits you to 20 messages per hour. The counter is visible in the UI.
+  </Step>
+</Steps>
+
+## Common Issues
+
+<AccordionGroup>
+  <Accordion title="Port 3000 Already in Use">
+    If port 3000 is already occupied, Next.js will automatically use port 3001. Check the terminal output for the correct URL.
+
+    Alternatively, specify a custom port:
+    ```bash
+    PORT=3002 npm run dev
+    ```
+  </Accordion>
+
+  <Accordion title="Ollama Connection Error">
+    If you see "Failed to connect to Ollama", ensure:
+    - Ollama is installed and running
+    - The model is downloaded: `ollama pull qwen3:0.6b`
+    - The endpoint in `agent1.ts` matches your Ollama server
+
+    For cloud Ollama (default), no local installation is needed.
+  </Accordion>
+
+  <Accordion title="Module Not Found Error">
+    If you see module errors, try:
+    ```bash
+    rm -rf node_modules package-lock.json
+    npm install
+    ```
+  </Accordion>
+
+  <Accordion title="TypeScript Errors">
+    If TypeScript errors appear, ensure you're using Node.js 18+ and TypeScript 5:
+    ```bash
+    node --version
+    npx tsc --version
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+Now that you have the application running:
+
+<CardGroup cols={2}>
+  <Card title="Installation Guide" icon="download" href="/installation">
+    Learn about detailed configuration options and environment setup
+  </Card>
+  <Card title="Architecture" icon="diagram-project" href="/architecture/request-flow">
+    Understand how the components work together
+  </Card>
+  <Card title="Agent Tools" icon="robot" href="/features/agent-tools">
+    Learn about built-in agent tools
+  </Card>
+  <Card title="Chat UI Features" icon="messages" href="/features/chat-ui">
+    Explore the chat interface capabilities
+  </Card>
+</CardGroup>
+
+## What You've Accomplished
+
+Congratulations! You've successfully:
+
+- ✅ Cloned and set up the ADK Utils Example project
+- ✅ Installed all dependencies and development tools
+- ✅ Configured an AI agent with Ollama model support
+- ✅ Started the development server
+- ✅ Tested the chat interface with streaming responses
+- ✅ Verified tool execution (time, diagrams, code)
+
+You're now ready to explore the codebase and build your own AI-powered applications!
+
+<Tip>
+  Join the community on GitHub to share your projects, ask questions, and contribute to the ADK Utils ecosystem.
+</Tip>

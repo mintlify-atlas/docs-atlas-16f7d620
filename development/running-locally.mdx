@@ -1,0 +1,233 @@
+---
+title: Running Locally
+description: Learn how to run the ADK Utils Example application in development mode
+icon: 'play'
+---
+
+## Development Server
+
+The ADK Utils Example uses Next.js 16 with the App Router. Follow these steps to run the application locally.
+
+<Steps>
+  <Step title="Install Dependencies">
+    First, install all required packages:
+
+    <CodeGroup>
+    ```bash npm
+    npm install
+    ```
+
+    ```bash yarn
+    yarn install
+    ```
+
+    ```bash pnpm
+    pnpm install
+    ```
+    </CodeGroup>
+  </Step>
+
+  <Step title="Start Development Server">
+    Run the Next.js development server:
+
+    <CodeGroup>
+    ```bash npm
+    npm run dev
+    ```
+
+    ```bash yarn
+    yarn dev
+    ```
+
+    ```bash pnpm
+    pnpm dev
+    ```
+    </CodeGroup>
+
+    The application will start at [http://localhost:3000](http://localhost:3000)
+  </Step>
+
+  <Step title="Open in Browser">
+    Navigate to `http://localhost:3000` in your browser to start using the chat interface.
+  </Step>
+</Steps>
+
+## Available Scripts
+
+The project includes several npm scripts for different development tasks:
+
+### Development Scripts
+
+```json package.json
+{
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "adk:web": "adk web ./app/agents/"
+  }
+}
+```
+
+| Script | Command | Description |
+|--------|---------|-------------|
+| `dev` | `npm run dev` | Starts the Next.js development server with hot reload |
+| `build` | `npm run build` | Creates an optimized production build |
+| `start` | `npm run start` | Runs the production build |
+| `lint` | `npm run lint` | Runs ESLint to check code quality |
+| `adk:web` | `npm run adk:web` | Launches the ADK web tool for agent inspection |
+
+## ADK Web Tool
+
+The ADK Web Tool is a powerful development utility that allows you to inspect and debug your AI agents.
+
+### Launching ADK Web Tool
+
+<CodeGroup>
+```bash npm
+npm run adk:web
+```
+
+```bash yarn
+yarn adk:web
+```
+
+```bash pnpm
+pnpm adk:web
+```
+</CodeGroup>
+
+This command launches the ADK web explorer and points it to your agents directory:
+
+```bash
+adk web ./app/agents/
+```
+
+### Features
+
+- **Agent Inspection**: View all configured agents and their properties
+- **Tool Visualization**: See all available tools (e.g., `get_current_time`, `create_mermaid_diagram`)
+- **Model Configuration**: Inspect model settings and parameters
+- **Interactive Testing**: Test agents directly from the web interface
+
+<Note>
+The ADK web tool is especially useful for debugging agent behavior and understanding tool execution flow.
+</Note>
+
+## Hot Reload and Development Workflow
+
+Next.js provides fast refresh capabilities for an optimal development experience:
+
+### What Gets Hot Reloaded?
+
+- **React Components**: All `.tsx` and `.jsx` files in the `app/` and `components/` directories
+- **API Routes**: Changes to files in `app/api/` trigger server restarts
+- **Agent Configuration**: Modifications to agent files in `app/agents/`
+- **Styles**: Tailwind CSS classes and global styles update instantly
+
+### Development Workflow
+
+1. **Make Changes**: Edit your code in any file
+2. **Instant Feedback**: See changes reflected in the browser immediately
+3. **Preserve State**: React Fast Refresh maintains component state when possible
+4. **API Testing**: Use the chat interface to test agent responses
+
+<Tabs>
+  <Tab title="Frontend Changes">
+    Changes to React components, UI elements, and styles are reflected instantly without refreshing the page.
+
+    ```tsx Example: Editing a Component
+    // components/ChatMessage.tsx
+    export function ChatMessage({ message }) {
+      return (
+        <div className="message">
+          {/* Your changes appear instantly */}
+          {message.content}
+        </div>
+      )
+    }
+    ```
+  </Tab>
+
+  <Tab title="Backend Changes">
+    Changes to API routes and server-side code trigger automatic server restarts.
+
+    ```ts Example: Editing API Route
+    // app/api/genai-agent/route.ts
+    export async function POST(req: Request) {
+      // Changes here restart the dev server
+      const { messages } = await req.json();
+      // ...
+    }
+    ```
+  </Tab>
+
+  <Tab title="Agent Changes">
+    Modifications to agent configuration require restarting the development server or using the ADK web tool.
+
+    ```ts Example: Editing Agent
+    // app/agents/agent1.ts
+    export const rootAgent = new LlmAgent({
+      name: "agent1",
+      model: new OllamaModel("gpt-oss:120b-cloud", "https://ollama.com"),
+      // Changes to agent config may need server restart
+    });
+    ```
+  </Tab>
+</Tabs>
+
+## Development Environment
+
+### Requirements
+
+- **Node.js**: Version 18 or higher
+- **Package Manager**: npm, yarn, or pnpm
+- **Browser**: Modern browser with JavaScript enabled
+
+### Port Configuration
+
+By default, the development server runs on port `3000`. To use a different port:
+
+```bash
+PORT=3001 npm run dev
+```
+
+<Warning>
+If port 3000 is already in use, Next.js will automatically try the next available port (3001, 3002, etc.).
+</Warning>
+
+## Troubleshooting
+
+### Common Issues
+
+**Port Already in Use**
+```bash
+# Find and kill the process using port 3000
+lsof -ti:3000 | xargs kill -9
+```
+
+**Module Not Found Errors**
+```bash
+# Clear node_modules and reinstall
+rm -rf node_modules package-lock.json
+npm install
+```
+
+**Cache Issues**
+```bash
+# Clear Next.js cache
+rm -rf .next
+npm run dev
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Testing" icon="flask" href="/development/testing">
+    Learn how to run unit and E2E tests
+  </Card>
+  <Card title="Configuration" icon="gear" href="/development/configuration">
+    Configure environment variables and settings
+  </Card>
+</CardGroup>

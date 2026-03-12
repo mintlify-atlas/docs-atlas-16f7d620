@@ -1,0 +1,231 @@
+---
+title: ChatTypingIndicator
+description: An animated typing indicator component that shows when the agent is processing a message.
+---
+
+## Overview
+
+The `ChatTypingIndicator` component displays a simple, elegant animation of three pulsing dots to indicate that the chat agent is actively processing a response. This provides visual feedback to users during the waiting period between sending a message and receiving a response.
+
+## Props
+
+This component accepts no props. It is a self-contained visual indicator.
+
+```typescript
+// No props interface - component is stateless
+export function ChatTypingIndicator() {
+  // ...
+}
+```
+
+## Usage
+
+```typescript
+import { ChatTypingIndicator } from "@/components/chat-typing-indicator";
+import { ChatMessage } from "@/components/chat-message";
+
+function ChatMessages({ messages, isLoading }) {
+  return (
+    <div className="flex flex-col gap-4">
+      {messages.map((message) => (
+        <ChatMessage key={message.id} message={message} />
+      ))}
+      
+      {isLoading && (
+        <div className="flex gap-3">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent">
+            <Bot className="h-4 w-4" />
+          </div>
+          <div className="rounded-2xl bg-card px-4 py-3">
+            <ChatTypingIndicator />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+## Features
+
+### Animation
+
+Three circular dots animate in sequence with a pulsing effect:
+- **Dot 1**: Animation starts immediately (0ms delay)
+- **Dot 2**: Animation starts after 200ms delay
+- **Dot 3**: Animation starts after 400ms delay
+
+This creates a wave-like "typing" effect that's universally recognized as a loading indicator in chat interfaces.
+
+### Styling
+
+```css
+/* Each dot */
+.h-2 w-2           /* 8px × 8px */
+.rounded-full       /* Perfect circle */
+.bg-muted-foreground /* Muted gray color */
+.animate-blink      /* Custom blink animation */
+```
+
+### Animation Timing
+
+```typescript
+// Inline styles for staggered animation
+style={{ animationDelay: "0ms" }}    // First dot
+style={{ animationDelay: "200ms" }}  // Second dot
+style={{ animationDelay: "400ms" }}  // Third dot
+```
+
+## Custom Animation
+
+The component uses a custom `animate-blink` class which should be defined in your Tailwind configuration:
+
+```javascript
+// tailwind.config.js
+module.exports = {
+  theme: {
+    extend: {
+      keyframes: {
+        blink: {
+          '0%, 100%': { opacity: 0.2 },
+          '50%': { opacity: 1 },
+        },
+      },
+      animation: {
+        blink: 'blink 1.4s ease-in-out infinite',
+      },
+    },
+  },
+};
+```
+
+## Visual Design
+
+```
+○ ○ ○  (Initial state)
+● ○ ○  (200ms)
+○ ● ○  (400ms)
+○ ○ ●  (600ms)
+● ○ ○  (Repeats...)
+```
+
+The dots pulse in and out in a sequential pattern, creating a smooth, continuous animation that clearly indicates processing activity.
+
+## Layout
+
+The component uses flexbox for horizontal alignment:
+- Display: `flex`
+- Direction: Row (default)
+- Alignment: Center (items-center)
+- Gap: 0.25rem (4px) between dots
+
+## Use Cases
+
+### 1. AI Response Loading
+
+```typescript
+function Chat() {
+  const { messages, isLoading } = useChat();
+  
+  return (
+    <div>
+      {messages.map(msg => <ChatMessage key={msg.id} message={msg} />)}
+      {isLoading && <ChatTypingIndicator />}
+    </div>
+  );
+}
+```
+
+### 2. Stream Processing
+
+```typescript
+function StreamingChat() {
+  const { messages, isStreaming } = useStreamingChat();
+  
+  return (
+    <div>
+      {messages.map(msg => <ChatMessage key={msg.id} message={msg} />)}
+      {isStreaming && !messages[messages.length - 1]?.parts[0]?.text && (
+        <ChatTypingIndicator />
+      )}
+    </div>
+  );
+}
+```
+
+### 3. Custom Message Container
+
+```typescript
+function TypingMessage() {
+  return (
+    <div className="flex gap-3 items-start">
+      <Avatar>
+        <Bot className="h-4 w-4" />
+      </Avatar>
+      <div className="rounded-lg bg-card border border-white/20 px-4 py-3">
+        <ChatTypingIndicator />
+      </div>
+    </div>
+  );
+}
+```
+
+## Accessibility
+
+Consider adding ARIA attributes when using this component:
+
+```typescript
+<div 
+  role="status" 
+  aria-live="polite" 
+  aria-label="Agent is typing"
+>
+  <ChatTypingIndicator />
+</div>
+```
+
+This ensures screen readers announce when the agent is processing a response.
+
+## Performance
+
+The component is highly performant:
+- **No JavaScript animations**: Uses pure CSS animations
+- **No state management**: Completely stateless
+- **No props validation**: Zero runtime overhead
+- **Small bundle size**: Minimal code footprint
+
+## Customization
+
+You can customize the appearance by wrapping the component:
+
+```typescript
+// Larger dots
+<div className="scale-150">
+  <ChatTypingIndicator />
+</div>
+
+// Different color
+<div className="[&>span]:bg-blue-500">
+  <ChatTypingIndicator />
+</div>
+
+// Faster animation
+<div className="[&>span]:animate-[blink_0.8s_ease-in-out_infinite]">
+  <ChatTypingIndicator />
+</div>
+```
+
+## Related Components
+
+<CardGroup cols={2}>
+  <Card title="ChatMessage" href="/api/components/chat-message">
+    Displays actual chat messages
+  </Card>
+  <Card title="ChatInput" href="/api/components/chat-input">
+    Input with loading state integration
+  </Card>
+</CardGroup>
+
+## Source Code
+
+View the source code on [GitHub](https://github.com/YagoLopez/adk-utils-example/blob/main/components/chat-typing-indicator.tsx)

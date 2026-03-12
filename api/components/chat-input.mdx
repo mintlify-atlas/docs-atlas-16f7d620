@@ -1,0 +1,150 @@
+---
+title: ChatInput
+description: A textarea-based input component with auto-resize, submit, and reset functionality for chat messages.
+---
+
+## Overview
+
+The `ChatInput` component provides the main user input interface for the chat application. It features an auto-resizing textarea, submit button, reset button, and displays a footer with project information. The component handles keyboard shortcuts (Enter to submit, Shift+Enter for new lines) and automatically focuses on load.
+
+## Props
+
+<ParamField path="input" type="string" required>
+  The current value of the input field. Should be controlled by parent component state.
+</ParamField>
+
+<ParamField path="onInputChange" type="(value: string) => void" required>
+  Callback function triggered when the input value changes. Receives the new input value as a string.
+</ParamField>
+
+<ParamField path="onSubmit" type="() => void" required>
+  Callback function triggered when the user submits the message (via button click or Enter key).
+</ParamField>
+
+<ParamField path="onReset" type="() => void" required>
+  Callback function triggered when the user clicks the reset/home button.
+</ParamField>
+
+<ParamField path="onInfoClick" type="() => void" required>
+  Callback function for info button clicks (defined in interface but not currently used in implementation).
+</ParamField>
+
+<ParamField path="isResetDisabled" type="boolean" required>
+  Whether the reset button should be disabled. Typically true when there are no messages.
+</ParamField>
+
+<ParamField path="isLoading" type="boolean" required>
+  Whether the chat is currently processing a message. Disables input and buttons during loading.
+</ParamField>
+
+## TypeScript Interface
+
+```typescript
+interface ChatInputProps {
+  input: string;
+  onInputChange: (value: string) => void;
+  onSubmit: () => void;
+  onReset: () => void;
+  onInfoClick: () => void;
+  isResetDisabled: boolean;
+  isLoading: boolean;
+}
+```
+
+## Usage
+
+```typescript
+import { ChatInput } from "@/components/chat-input";
+import { useState } from "react";
+
+function ChatApp() {
+  const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [messages, setMessages] = useState([]);
+
+  const handleSubmit = async () => {
+    if (!input.trim()) return;
+    
+    setIsLoading(true);
+    // Send message logic
+    setInput("");
+    setIsLoading(false);
+  };
+
+  const handleReset = () => {
+    setMessages([]);
+    setInput("");
+  };
+
+  return (
+    <ChatInput
+      input={input}
+      onInputChange={setInput}
+      onSubmit={handleSubmit}
+      onReset={handleReset}
+      onInfoClick={() => {}}
+      isResetDisabled={messages.length === 0}
+      isLoading={isLoading}
+    />
+  );
+}
+```
+
+## Features
+
+### Auto-Resize Textarea
+- Automatically expands as content grows
+- Minimum height: 48px
+- Maximum height: 160px
+- Smooth transition when resizing
+
+### Keyboard Shortcuts
+- **Enter**: Submit message
+- **Shift + Enter**: Insert new line
+
+### Visual Feedback
+- Glowing shadow effect on focus
+- Submit button disabled when input is empty or loading
+- Loading state disables all interactions
+- Tooltips on action buttons
+
+### Action Buttons
+1. **Submit Button** (ArrowRight icon)
+   - Position: Bottom-right inside textarea
+   - Disabled when: input empty or loading
+
+2. **Reset Button** (Home icon)
+   - Position: Far right inside textarea
+   - Disabled when: `isResetDisabled` is true or loading
+
+## Styling
+
+The component uses a dark theme with:
+- Gray-800 background
+- Zinc-700 borders
+- Accent color highlights on focus
+- White glowing shadow effects
+- Responsive padding (sm breakpoint)
+
+## Auto-Focus
+
+The component uses the `useFocusOnLoad` custom hook to automatically focus the textarea when:
+- The component mounts
+- The loading state changes
+
+This ensures a smooth user experience by keeping the input ready for interaction.
+
+## Related Components
+
+<CardGroup cols={2}>
+  <Card title="ChatHeader" href="/api/components/chat-header">
+    Header with reset functionality
+  </Card>
+  <Card title="ChatMessage" href="/api/components/chat-message">
+    Displays submitted messages
+  </Card>
+</CardGroup>
+
+## Source Code
+
+View the source code on [GitHub](https://github.com/YagoLopez/adk-utils-example/blob/main/components/chat-input.tsx)

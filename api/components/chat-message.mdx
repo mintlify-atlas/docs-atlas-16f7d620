@@ -1,0 +1,206 @@
+---
+title: ChatMessage
+description: A message display component with markdown rendering, code syntax highlighting, and mermaid diagram support.
+---
+
+## Overview
+
+The `ChatMessage` component renders individual chat messages with rich content support. It handles both user and agent messages, displays markdown with syntax highlighting using Streamdown, supports mermaid diagrams, and can show tool call information. The component intelligently handles message parts and applies appropriate styling based on the message role.
+
+## Props
+
+<ParamField path="message" type="UIMessage" required>
+  The message object containing role, parts, and other message data. Uses the `UIMessage` type from the AI SDK.
+</ParamField>
+
+<ParamField path="isLastBotMessage" type="boolean" default={false}>
+  Whether this is the last message from the bot/agent in the conversation. Used to apply special visual effects (glowing shadow) to highlight the latest response.
+</ParamField>
+
+## TypeScript Interface
+
+```typescript
+import type { UIMessage } from "ai";
+
+interface ChatMessageProps {
+  message: UIMessage;
+  isLastBotMessage?: boolean;
+}
+```
+
+## UIMessage Structure
+
+The `UIMessage` type from the AI SDK includes:
+
+```typescript
+interface UIMessage {
+  id: string;
+  role: "user" | "assistant" | "system" | "tool";
+  parts: MessagePart[];
+}
+
+type MessagePart = 
+  | { type: "text"; text: string }
+  | { type: "tool-call"; toolName: string; args: any }
+  | { type: "tool-result"; toolName: string; output: any };
+```
+
+## Usage
+
+```typescript
+import { ChatMessage } from "@/components/chat-message";
+import type { UIMessage } from "ai";
+
+function ChatMessages({ messages }: { messages: UIMessage[] }) {
+  return (
+    <div className="flex flex-col gap-4">
+      {messages.map((message, index) => (
+        <ChatMessage
+          key={message.id}
+          message={message}
+          isLastBotMessage={
+            message.role === "assistant" && 
+            index === messages.length - 1
+          }
+        />
+      ))}
+    </div>
+  );
+}
+```
+
+## Features
+
+### Rich Content Rendering
+
+- **Markdown Support**: Full markdown rendering via Streamdown
+- **Code Syntax Highlighting**: Uses `@streamdown/code` plugin with vitesse themes
+- **Mermaid Diagrams**: Renders mermaid diagrams with custom Dracula-inspired theme
+- **Tool Call Display**: Shows tool invocations with name and output
+
+### Visual Styling
+
+#### User Messages
+- Aligned to the right (flex-row-reverse)
+- User icon in a muted background circle
+- Accent background color
+- Rounded corners with top-right corner less rounded
+- Border with zinc-400 color
+
+#### Agent Messages
+- Aligned to the left
+- Bot icon in accent background circle
+- Card background color
+- Rounded corners with top-left corner less rounded
+- Border with white/20 opacity
+- **Special Effect**: Last bot message gets a glowing white shadow
+
+### Content Filtering
+
+The component intelligently handles empty or tool-only messages:
+- Returns `null` if no renderable content exists
+- Checks for non-empty text parts
+- Considers tool-related parts as renderable
+
+### Message Parts Handling
+
+1. **Text Parts**: Rendered with Streamdown markdown processor
+2. **Tool Parts**: Displayed in a gray muted box with:
+   - Tool name in monospace font
+   - JSON-formatted output (if available)
+   - Syntax highlighting for better readability
+
+## Streamdown Configuration
+
+### Code Plugin
+
+```typescript
+const code = createCodePlugin({
+  themes: ["vitesse-light", "vitesse-dark"],
+});
+```
+
+### Mermaid Plugin
+
+Custom Dracula-inspired theme with:
+- Dark background (#282a36)
+- Purple borders (#bd93f9)
+- Cyan and pink accents
+- White text (#f8f8f2)
+- Yellow connector lines
+
+```typescript
+const mermaid = createMermaidPlugin({
+  config: {
+    startOnLoad: false,
+    theme: "base",
+    themeVariables: {
+      darkMode: true,
+      background: "#282a36",
+      primaryColor: "#44475a",
+      primaryTextColor: "#f8f8f2",
+      primaryBorderColor: "#bd93f9",
+      // ... additional theme variables
+    },
+  },
+});
+```
+
+## Examples
+
+### Simple Text Message
+
+```typescript
+const message: UIMessage = {
+  id: "1",
+  role: "user",
+  parts: [{ type: "text", text: "Hello, how are you?" }],
+};
+
+<ChatMessage message={message} />
+```
+
+### Message with Code
+
+```typescript
+const message: UIMessage = {
+  id: "2",
+  role: "assistant",
+  parts: [{
+    type: "text",
+    text: "Here's a code example:\n\n```typescript\nconst greeting = 'Hello';\n```"
+  }],
+};
+
+<ChatMessage message={message} isLastBotMessage={true} />
+```
+
+### Message with Tool Call
+
+```typescript
+const message: UIMessage = {
+  id: "3",
+  role: "assistant",
+  parts: [
+    { type: "text", text: "Let me check that for you..." },
+    { type: "tool-result", output: { result: "Success" } }
+  ],
+};
+
+<ChatMessage message={message} />
+```
+
+## Related Components
+
+<CardGroup cols={2}>
+  <Card title="ChatTypingIndicator" href="/api/components/chat-typing-indicator">
+    Shows when agent is processing
+  </Card>
+  <Card title="ChatInput" href="/api/components/chat-input">
+    Input for creating new messages
+  </Card>
+</CardGroup>
+
+## Source Code
+
+View the source code on [GitHub](https://github.com/YagoLopez/adk-utils-example/blob/main/components/chat-message.tsx)

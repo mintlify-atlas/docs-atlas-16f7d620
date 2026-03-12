@@ -1,0 +1,175 @@
+---
+title: 'Root Agent'
+description: 'Complete documentation for the rootAgent implementation'
+icon: 'robot'
+---
+
+## Overview
+
+The `rootAgent` is the main LLM agent in the ADK Utils Example project. It demonstrates integration with the Google ADK framework and showcases the use of `OllamaModel` from the `@yagolopez/adk-utils` package.
+
+<Card title="Key Features" icon="star">
+  - Multi-model support (Gemini, Ollama)
+  - Three powerful function tools
+  - Flexible model configuration
+  - Real-time interaction capabilities
+</Card>
+
+## Agent Configuration
+
+The rootAgent is configured with the following properties:
+
+<ParamField path="name" type="string">
+  Agent identifier: `"agent1"`
+</ParamField>
+
+<ParamField path="model" type="OllamaModel | string">
+  The LLM model to use. Currently configured to use `gpt-oss:120b-cloud` via Ollama's cloud endpoint.
+</ParamField>
+
+<ParamField path="description" type="string">
+  Agent description: "Agent with three function tools: get_current_time, create_mermaid_diagram and view_source_code. It retrieves the current time, creates mermaid diagrams and visualizes source code."
+</ParamField>
+
+<ParamField path="instruction" type="string">
+  System instructions that guide the agent's behavior and tool usage.
+</ParamField>
+
+<ParamField path="tools" type="FunctionTool[]">
+  Array of three function tools: `getCurrentTime`, `createMermaidDiagram`, and `viewSourceCode`.
+</ParamField>
+
+## Complete Implementation
+
+Here's the full agent definition from `agent1.ts`:
+
+```typescript
+import { FunctionTool, LlmAgent } from "@google/adk";
+import { z } from "zod";
+import { OllamaModel } from "@yagolopez/adk-utils";
+
+export const rootAgent = new LlmAgent({
+  name: "agent1",
+  model: new OllamaModel("gpt-oss:120b-cloud", "https://ollama.com"),
+  description:
+    "Agent with three function tools: get_current_time, create_mermaid_diagram and view_source_code. It retrieves the current time, creates mermaid diagrams and visualizes source code.",
+  instruction: `You are a helpful assistant.
+                If the user ask for the time in a city, Use the 'get_current_time' tool for this purpose.
+                If the user asks for a diagram or visual representation, use the 'create_mermaid_diagram' tool.
+                If the user asks to view source code, use the 'view_source_code' tool.`,
+  tools: [getCurrentTime, createMermaidDiagram, viewSourceCode],
+});
+```
+
+## OllamaModel Integration
+
+The agent uses `OllamaModel` from `@yagolopez/adk-utils` to connect to various Ollama-compatible endpoints:
+
+```typescript
+// Current configuration (cloud-hosted model)
+model: new OllamaModel("gpt-oss:120b-cloud", "https://ollama.com")
+```
+
+### Available Model Options
+
+The source code includes several commented model options:
+
+<CodeGroup>
+```typescript Gemini
+model: 'gemini-2.5-flash'
+```
+
+```typescript Ollama Local (Qwen 0.6B)
+model: new OllamaModel("qwen3:0.6b", "http://localhost:11434")
+```
+
+```typescript Ollama Cloud (Qwen Coder)
+model: new OllamaModel("qwen3-coder-next:cloud", "https://ollama.com")
+```
+
+```typescript Ollama Cloud (GPT-OSS 120B)
+model: new OllamaModel("gpt-oss:120b-cloud", "https://ollama.com")
+```
+</CodeGroup>
+
+## Modifying the Agent
+
+### Changing the Model
+
+To switch between different models, simply uncomment the desired model configuration:
+
+```typescript
+export const rootAgent = new LlmAgent({
+  name: "agent1",
+  // Option 1: Use Gemini
+  model: 'gemini-2.5-flash',
+  
+  // Option 2: Use local Ollama
+  // model: new OllamaModel("qwen3:0.6b", "http://localhost:11434"),
+  
+  // ... rest of configuration
+});
+```
+
+### Adding New Tools
+
+To add a new tool to the agent:
+
+1. **Create the tool** using `FunctionTool`:
+
+```typescript
+const myNewTool = new FunctionTool({
+  name: "my_new_tool",
+  description: "Description of what the tool does",
+  parameters: z.object({
+    param1: z.string().describe("Parameter description"),
+  }),
+  execute: ({ param1 }) => {
+    // Tool implementation
+    return {
+      status: "success",
+      report: `Result: ${param1}`,
+    };
+  },
+});
+```
+
+2. **Add to the tools array**:
+
+```typescript
+tools: [getCurrentTime, createMermaidDiagram, viewSourceCode, myNewTool],
+```
+
+3. **Update the instruction** to guide the agent on when to use the new tool:
+
+```typescript
+instruction: `You are a helpful assistant.
+              If the user ask for the time in a city, Use the 'get_current_time' tool for this purpose.
+              If the user asks for a diagram or visual representation, use the 'create_mermaid_diagram' tool.
+              If the user asks to view source code, use the 'view_source_code' tool.
+              If the user asks for [specific condition], use the 'my_new_tool' tool.`,
+```
+
+### Customizing Instructions
+
+The `instruction` field is crucial for guiding agent behavior. It should:
+
+- Clearly define the agent's role
+- Specify when to use each tool
+- Provide context for decision-making
+- Use clear, directive language
+
+## Agent Location
+
+Source: `~/workspace/source/app/agents/agent1.ts`
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Tools Reference" icon="wrench" href="/api/agents/tools">
+    Learn about the three function tools available to the agent
+  </Card>
+  <Card title="OllamaModel" icon="server" href="/utilities/ollama-model">
+    Explore the OllamaModel utility for connecting to Ollama endpoints
+  </Card>
+</CardGroup>

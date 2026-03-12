@@ -1,0 +1,290 @@
+---
+title: 'Project Structure'
+description: 'Complete directory structure and organization of the ADK Utils Example project'
+icon: 'folder-tree'
+---
+
+## Overview
+
+The ADK Utils Example project follows Next.js 16 App Router conventions with a clear separation of concerns. The codebase is organized into logical directories that separate UI components, business logic, AI agents, and API routes.
+
+## Directory Structure
+
+```
+adk-utils-example/
+├── app/                    # Next.js App Router (pages & API routes)
+│   ├── agents/            # ADK agent definitions and tools
+│   ├── api/               # API route handlers
+│   │   ├── chat/         # Alternative chat endpoint
+│   │   └── genai-agent/  # Main agent communication endpoint
+│   ├── globals.css       # Global styles and Tailwind directives
+│   ├── layout.tsx        # Root layout component
+│   ├── page.tsx          # Home page (main chat interface)
+│   └── favicon.ico       # Application icon
+├── components/            # Reusable React UI components
+│   ├── ui/               # shadcn/ui base components
+│   ├── chat-empty-state.tsx
+│   ├── chat-header.tsx
+│   ├── chat-input.tsx
+│   ├── chat-message.tsx
+│   └── chat-typing-indicator.tsx
+├── hooks/                 # Custom React hooks
+│   ├── use-focus-on-load.ts
+│   └── use-scroll-to-bottom.ts
+├── lib/                   # Shared utilities and constants
+│   ├── constants.ts      # App-wide constants (rate limits, suggestions)
+│   └── utils.ts          # Utility functions
+├── public/                # Static assets
+│   ├── file.svg
+│   ├── globe.svg
+│   ├── next.svg
+│   ├── vercel.svg
+│   └── window.svg
+├── e2e/                   # Playwright end-to-end tests
+│   ├── chat.spec.ts
+│   └── home.spec.ts
+├── package.json           # Dependencies and scripts
+├── tsconfig.json         # TypeScript configuration
+└── tailwind.config.js    # Tailwind CSS configuration
+```
+
+## Key Directories
+
+<CardGroup cols={2}>
+  <Card title="/app" icon="route">
+    Next.js 16 App Router with pages, layouts, and API routes
+  </Card>
+  <Card title="/components" icon="square-stack">
+    Reusable React UI components for the chat interface
+  </Card>
+  <Card title="/hooks" icon="webhook">
+    Custom React hooks for app functionality
+  </Card>
+  <Card title="/lib" icon="box">
+    Shared utilities, constants, and helper functions
+  </Card>
+</CardGroup>
+
+## /app Directory
+
+The `app` directory contains all Next.js App Router pages and API routes.
+
+### /app/agents
+
+<Note>
+This directory contains ADK agent definitions, tools, and configurations.
+</Note>
+
+**Key File:** `agent1.ts` (lines 1-76)
+
+```typescript
+import { FunctionTool, LlmAgent } from "@google/adk";
+import { OllamaModel } from "@yagolopez/adk-utils";
+
+export const rootAgent = new LlmAgent({
+  name: "agent1",
+  model: new OllamaModel("gpt-oss:120b-cloud", "https://ollama.com"),
+  description: "Agent with three function tools...",
+  instruction: `You are a helpful assistant...`,
+  tools: [getCurrentTime, createMermaidDiagram, viewSourceCode],
+});
+```
+
+**Tools Defined:**
+- `get_current_time` - Returns the current time in a specified city
+- `create_mermaid_diagram` - Creates Mermaid diagrams (flowchart, sequence, etc.)
+- `view_source_code` - Shows source code to the user
+
+See [app/agents/agent1.ts](https://github.com/YagoLopez/adk-utils-example/blob/main/app/agents/agent1.ts) for the complete implementation.
+
+### /app/api
+
+API routes that handle backend communication.
+
+#### /app/api/genai-agent
+
+<Tip>
+This is the **main endpoint** for agent communication. It receives user messages and streams AI responses.
+</Tip>
+
+**File:** `route.ts` (lines 1-28)
+
+```typescript
+import { rootAgent } from "@/app/agents/agent1";
+import { GenAIAgentService } from "@yagolopez/adk-utils";
+
+export async function POST(req: Request) {
+  const { messages } = await req.json();
+  const service = new GenAIAgentService(rootAgent);
+  
+  if (!service.validateMessages(messages)) {
+    return GenAIAgentService.createErrorResponse("Messages are required", 400);
+  }
+  
+  return service.createStreamingResponse(messages);
+}
+```
+
+See [app/api/genai-agent/route.ts](https://github.com/YagoLopez/adk-utils-example/blob/main/app/api/genai-agent/route.ts) for details.
+
+#### /app/api/chat
+
+Alternative chat endpoint (currently not used by the main UI).
+
+### Root App Files
+
+| File | Purpose | Location |
+|------|---------|----------|
+| `page.tsx` | Main chat interface (home page) | [app/page.tsx](https://github.com/YagoLopez/adk-utils-example/blob/main/app/page.tsx) |
+| `layout.tsx` | Root layout with fonts and metadata | [app/layout.tsx](https://github.com/YagoLopez/adk-utils-example/blob/main/app/layout.tsx) |
+| `globals.css` | Global styles and Tailwind setup | [app/globals.css](https://github.com/YagoLopez/adk-utils-example/blob/main/app/globals.css) |
+
+## /components Directory
+
+All UI components for the chat interface are located here.
+
+<CardGroup cols={2}>
+  <Card title="chat-message.tsx" icon="message-square">
+    Renders individual chat messages with Markdown, code highlighting, and Mermaid diagrams
+  </Card>
+  <Card title="chat-input.tsx" icon="pen-line">
+    Input field with submit, reset, and info buttons
+  </Card>
+  <Card title="chat-header.tsx" icon="layout-panel-top">
+    Header with title, suggestions, and reset functionality
+  </Card>
+  <Card title="chat-empty-state.tsx" icon="inbox">
+    Welcome screen shown when no messages exist
+  </Card>
+  <Card title="chat-typing-indicator.tsx" icon="loader">
+    Animated indicator shown while AI is generating
+  </Card>
+  <Card title="ui/" icon="component">
+    shadcn/ui base components (Button, Tooltip, etc.)
+  </Card>
+</CardGroup>
+
+### ChatMessage Component
+
+The `ChatMessage` component uses **Streamdown** with plugins for advanced rendering:
+
+```typescript
+import { Streamdown } from "streamdown";
+import { createCodePlugin } from "@streamdown/code";
+import { createMermaidPlugin } from "@streamdown/mermaid";
+
+const code = createCodePlugin({
+  themes: ["vitesse-light", "vitesse-dark"],
+});
+
+const mermaid = createMermaidPlugin({ /* config */ });
+```
+
+See [components/chat-message.tsx](https://github.com/YagoLopez/adk-utils-example/blob/main/components/chat-message.tsx) for the full implementation.
+
+## /hooks Directory
+
+Custom React hooks that provide reusable functionality.
+
+<CardGroup cols={2}>
+  <Card title="use-scroll-to-bottom.ts" icon="arrow-down">
+    Auto-scrolls chat container when new messages arrive
+  </Card>
+  <Card title="use-focus-on-load.ts" icon="focus">
+    Automatically focuses input field on page load
+  </Card>
+</CardGroup>
+
+## /lib Directory
+
+Shared utilities and constants used throughout the app.
+
+### constants.ts
+
+Defines app-wide constants including:
+- **Rate limiting:** `LIMIT = 20` messages per hour
+- **Time window:** `ONE_HOUR_IN_MS = 60 * 60 * 1000`
+- **Suggestions:** Array of pre-defined prompts with icons
+
+See [lib/constants.ts](https://github.com/YagoLopez/adk-utils-example/blob/main/lib/constants.ts).
+
+### utils.ts
+
+Utility functions for common operations like class name merging.
+
+## /e2e Directory
+
+Playwright end-to-end tests for the application.
+
+<CardGroup cols={2}>
+  <Card title="home.spec.ts" icon="house">
+    Tests for the home page rendering
+  </Card>
+  <Card title="chat.spec.ts" icon="message-circle">
+    Tests for chat functionality and interactions
+  </Card>
+</CardGroup>
+
+**Run tests:**
+```bash
+npm run test:e2e:headless  # Headless mode
+npm run test:e2e:headed    # With browser UI
+npm run test:e2e:ui        # Interactive UI mode
+```
+
+## Configuration Files
+
+### package.json
+
+**Key Dependencies:**
+- `@google/adk` - Google Agent Development Kit
+- `@yagolopez/adk-utils` - Enhanced Ollama model support
+- `ai` - Vercel AI SDK
+- `next` (16.1.6) - Next.js framework
+- `react` (19.2.4) - React library
+- `streamdown` - Markdown rendering with plugins
+
+**Key Scripts:**
+```json
+{
+  "dev": "next dev",
+  "build": "next build",
+  "adk:web": "adk web ./app/agents/",
+  "test": "jest",
+  "test:e2e:headless": "playwright test --reporter=list"
+}
+```
+
+See [package.json](https://github.com/YagoLopez/adk-utils-example/blob/main/package.json) for the complete configuration.
+
+## Next.js App Router Structure
+
+<Steps>
+  <Step title="File-based Routing">
+    Pages are defined by files in the `app/` directory. `page.tsx` becomes the route `/`.
+  </Step>
+  <Step title="Layouts">
+    `layout.tsx` wraps all child pages and persists across navigation.
+  </Step>
+  <Step title="API Routes">
+    API endpoints are created in `app/api/` with `route.ts` files.
+  </Step>
+  <Step title="Server vs Client Components">
+    By default, components are Server Components unless marked with `"use client"`.
+  </Step>
+</Steps>
+
+<Note>
+The main chat interface (`app/page.tsx`) is a Client Component because it uses React hooks like `useState` and `useChat`.
+</Note>
+
+## Related Pages
+
+<CardGroup cols={2}>
+  <Card title="Request Flow" icon="arrow-right-arrow-left" href="/architecture/request-flow">
+    Learn how user messages flow through the system
+  </Card>
+  <Card title="Installation" icon="rocket" href="/installation">
+    Set up your development environment
+  </Card>
+</CardGroup>

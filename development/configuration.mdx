@@ -1,0 +1,469 @@
+---
+title: Configuration
+description: Configure environment variables, agents, and application settings
+icon: 'gear'
+---
+
+## Environment Variables
+
+The ADK Utils Example requires environment variables for API keys and service endpoints.
+
+### Setting Up Environment Variables
+
+<Steps>
+  <Step title="Create .env File">
+    Create a `.env` file in the root directory of your project:
+
+    ```bash
+    touch .env
+    ```
+
+    <Note>
+    The `.env*` pattern is already included in `.gitignore` to prevent committing sensitive information.
+    </Note>
+  </Step>
+
+  <Step title="Add Configuration">
+    Add your environment-specific configuration:
+
+    ```bash .env
+    # API Keys (if using Gemini models)
+    GOOGLE_GENAI_API_KEY=your_api_key_here
+
+    # Server Configuration
+    PORT=3000
+
+    # Ollama Configuration (if using local models)
+    OLLAMA_BASE_URL=http://localhost:11434
+    ```
+  </Step>
+
+  <Step title="Restart Development Server">
+    After adding environment variables, restart your development server:
+
+    ```bash
+    npm run dev
+    ```
+  </Step>
+</Steps>
+
+### Common Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|----------|
+| `PORT` | Port for the development/production server | `3000` |
+| `GOOGLE_GENAI_API_KEY` | API key for Google Gemini models | None |
+| `OLLAMA_BASE_URL` | Base URL for Ollama API | `http://localhost:11434` |
+
+<Warning>
+Never commit `.env` files to version control. Keep API keys and sensitive information secure.
+</Warning>
+
+## Agent Configuration
+
+Agents are defined in the `app/agents/` directory. The main agent configuration is in `agent1.ts`.
+
+### Agent Structure
+
+```typescript app/agents/agent1.ts
+import { FunctionTool, LlmAgent } from "@google/adk";
+import { z } from "zod";
+import { OllamaModel } from "@yagolopez/adk-utils";
+
+export const rootAgent = new LlmAgent({
+  name: "agent1",
+  model: new OllamaModel("gpt-oss:120b-cloud", "https://ollama.com"),
+  description:
+    "Agent with three function tools: get_current_time, create_mermaid_diagram and view_source_code.",
+  instruction: `You are a helpful assistant.
+                If the user ask for the time in a city, Use the 'get_current_time' tool.
+                If the user asks for a diagram, use the 'create_mermaid_diagram' tool.
+                If the user asks to view source code, use the 'view_source_code' tool.`,
+  tools: [getCurrentTime, createMermaidDiagram, viewSourceCode],
+});
+```
+
+### Model Selection
+
+The agent configuration supports multiple model providers:
+
+<Tabs>
+  <Tab title="Ollama Cloud">
+    Use cloud-hosted Ollama models:
+
+    ```typescript
+    import { OllamaModel } from "@yagolopez/adk-utils";
+
+    model: new OllamaModel("gpt-oss:120b-cloud", "https://ollama.com")
+    ```
+
+    Other available cloud models:
+    - `qwen3-coder-next:cloud`
+    - `gpt-oss:120b-cloud`
+  </Tab>
+
+  <Tab title="Ollama Local">
+    Use locally hosted Ollama models:
+
+    ```typescript
+    import { OllamaModel } from "@yagolopez/adk-utils";
+
+    model: new OllamaModel("qwen3:0.6b", "http://localhost:11434")
+    ```
+
+    <Note>
+    Ensure Ollama is running locally on port 11434 (default port).
+    </Note>
+  </Tab>
+
+  <Tab title="Google Gemini">
+    Use Google's Gemini models:
+
+    ```typescript
+    model: 'gemini-2.5-flash'
+    ```
+
+    <Warning>
+    Requires `GOOGLE_GENAI_API_KEY` environment variable to be set.
+    </Warning>
+  </Tab>
+</Tabs>
+
+### Configuring Tools
+
+Tools extend your agent's capabilities. The example includes three tools:
+
+#### 1. Get Current Time Tool
+
+```typescript
+const getCurrentTime = new FunctionTool({
+  name: "get_current_time",
+  description: "Returns the current time in a specified city.",
+  parameters: z.object({
+    city: z
+      .string()
+      .describe("The name of the city for which to retrieve the current time."),
+  }),
+  execute: ({ city }) => {
+    return {
+      status: "success",
+      report: `The current time in ${city} is 10:30 AM`,
+    };
+  },
+});
+```
+
+#### 2. Create Mermaid Diagram Tool
+
+```typescript
+const createMermaidDiagram = new FunctionTool({
+  name: "create_mermaid_diagram",
+  description: "Creates a mermaid diagram using markdown.",
+  parameters: z.object({
+    type: z
+      .enum([
+        "flowchart",
+        "sequence",
+        "class",
+        "state",
+        "er",
+        "gantt",
+        "pie",
+        "mindmap",
+        "timeline",
+      ])
+      .describe("The type of diagram to create."),
+    definition: z.string().describe("The mermaid diagram definition."),
+  }),
+  execute: ({ definition }) => {
+    return {
+      status: "success",
+      report: `\`\`\`mermaid\n${definition}\n\`\`\``,
+    };
+  },
+});
+```
+
+#### 3. View Source Code Tool
+
+```typescript
+const viewSourceCode = new FunctionTool({
+  name: "view_source_code",
+  description: "Shows the source code asked by the user",
+  parameters: z.object({ 
+    definition: z.string().describe("The kind of source code the user wants to see.") 
+  }),
+  execute: ({ definition }) => {
+    return {
+      status: "success",
+      report: `\`\`\`sourcecode\n${definition}\n\`\`\``,
+    };
+  },
+});
+```
+
+### Tool Configuration Best Practices
+
+<Steps>
+  <Step title="Clear Descriptions">
+    Provide clear, concise descriptions that help the LLM understand when to use the tool.
+  </Step>
+
+  <Step title="Zod Schemas">
+    Use Zod for robust parameter validation and type safety.
+  </Step>
+
+  <Step title="Descriptive Parameters">
+    Add `.describe()` to each parameter to guide the LLM's tool usage.
+  </Step>
+
+  <Step title="Structured Responses">
+    Return consistent response structures with `status` and `report` fields.
+  </Step>
+</Steps>
+
+## Next.js Configuration
+
+The `next.config.ts` file contains Next.js-specific settings:
+
+```typescript next.config.ts
+import type { NextConfig } from "next";
+
+const nextConfig: NextConfig = {
+  /* config options here */
+};
+
+export default nextConfig;
+```
+
+### Common Next.js Options
+
+You can extend this configuration with:
+
+```typescript Example Extensions
+const nextConfig: NextConfig = {
+  // Enable React strict mode
+  reactStrictMode: true,
+
+  // Configure image domains
+  images: {
+    domains: ['example.com'],
+  },
+
+  // Environment variables exposed to the browser
+  env: {
+    CUSTOM_KEY: process.env.CUSTOM_KEY,
+  },
+
+  // Webpack configuration
+  webpack: (config) => {
+    // Custom webpack config
+    return config;
+  },
+};
+```
+
+<Note>
+Next.js 16 uses the App Router by default. The project structure is in `app/` directory.
+</Note>
+
+## TypeScript Configuration
+
+The `tsconfig.json` file configures TypeScript compilation:
+
+```json tsconfig.json
+{
+  "compilerOptions": {
+    "target": "ES2017",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": ["./*"]
+    }
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts",
+    "**/*.mts"
+  ],
+  "exclude": ["node_modules"]
+}
+```
+
+### Key TypeScript Settings
+
+| Setting | Value | Description |
+|---------|-------|-------------|
+| `strict` | `true` | Enable all strict type checking options |
+| `target` | `ES2017` | ECMAScript target version |
+| `jsx` | `react-jsx` | JSX compilation mode for React 19 |
+| `moduleResolution` | `bundler` | Modern module resolution for bundlers |
+| `paths` | `@/*` → `./*` | Path alias for cleaner imports |
+
+### Path Aliases
+
+Use the `@/` prefix for cleaner imports:
+
+```typescript
+// Instead of:
+import { Button } from '../../components/ui/button'
+
+// Use:
+import { Button } from '@/components/ui/button'
+```
+
+## Tailwind CSS Configuration
+
+The project uses Tailwind CSS 4 with PostCSS:
+
+```javascript postcss.config.mjs
+export default {
+  plugins: {
+    '@tailwindcss/postcss': {},
+  },
+};
+```
+
+### Global Styles
+
+Global styles are imported in `app/globals.css`:
+
+```css app/globals.css
+@import "tailwindcss";
+
+/* Your custom styles */
+```
+
+### Tailwind Dependencies
+
+```json devDependencies
+{
+  "@tailwindcss/postcss": "^4",
+  "tailwindcss": "^4",
+  "tw-animate-css": "^1.4.0"
+}
+```
+
+<Note>
+The project uses Tailwind CSS 4, which has a different configuration approach than v3.
+</Note>
+
+## Playwright Configuration
+
+E2E tests are configured in `playwright.config.ts`:
+
+```typescript Key Settings
+{
+  testDir: "./e2e",
+  fullyParallel: true,
+  use: {
+    baseURL: `http://localhost:${PORT}`,
+    trace: "on-first-retry",
+  },
+  projects: [
+    {
+      name: "chromium",
+      use: { ...devices["Desktop Chrome"] },
+    },
+  ],
+}
+```
+
+See the [Testing](/development/testing) page for detailed Playwright configuration.
+
+## ESLint Configuration
+
+Code quality is enforced with ESLint:
+
+```javascript eslint.config.mjs
+// ESLint configuration
+```
+
+Run linting with:
+
+```bash
+npm run lint
+```
+
+## Component Configuration
+
+The `components.json` file configures the component library setup:
+
+```json components.json
+{
+  "$schema": "https://ui.shadcn.com/schema.json",
+  "style": "default",
+  "rsc": true,
+  "tsx": true,
+  "tailwind": {
+    "config": "tailwind.config.ts",
+    "css": "app/globals.css",
+    "baseColor": "slate",
+    "cssVariables": true
+  },
+  "aliases": {
+    "components": "@/components",
+    "utils": "@/lib/utils"
+  }
+}
+```
+
+<Note>
+This configuration is used by shadcn/ui for component installation and management.
+</Note>
+
+## Configuration Checklist
+
+<Steps>
+  <Step title="Environment Variables">
+    - [ ] Create `.env` file
+    - [ ] Add required API keys
+    - [ ] Configure service endpoints
+  </Step>
+
+  <Step title="Agent Configuration">
+    - [ ] Choose your model provider (Ollama/Gemini)
+    - [ ] Configure agent tools
+    - [ ] Set agent instructions
+  </Step>
+
+  <Step title="Development Tools">
+    - [ ] Verify TypeScript configuration
+    - [ ] Set up ESLint
+    - [ ] Configure test environments
+  </Step>
+
+  <Step title="Styling">
+    - [ ] Customize Tailwind configuration
+    - [ ] Add custom CSS if needed
+  </Step>
+</Steps>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Running Locally" icon="play" href="/development/running-locally">
+    Start the development server
+  </Card>
+  <Card title="Testing" icon="flask" href="/development/testing">
+    Run unit and E2E tests
+  </Card>
+</CardGroup>

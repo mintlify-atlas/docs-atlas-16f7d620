@@ -1,0 +1,139 @@
+---
+title: 'Custom Hooks'
+description: 'React custom hooks for common UI patterns'
+icon: 'hook'
+---
+
+## Overview
+
+This module provides custom React hooks for handling common UI patterns like auto-focusing inputs and automatic scrolling.
+
+---
+
+## useScrollToBottom
+
+Automatically scrolls an element to the bottom when dependencies change. Useful for chat interfaces, logs, or any scrollable content that should stay at the bottom when new items are added.
+
+### Parameters
+
+<ParamField path="ref" type="RefObject<HTMLDivElement | null>" required>
+  React ref of the container element that should scroll to bottom
+</ParamField>
+
+<ParamField path="deps" type="unknown[]" required>
+  Array of dependencies that should trigger the scroll behavior. The scroll occurs whenever any of these values change.
+</ParamField>
+
+### Usage Example
+
+```tsx
+import { useRef } from 'react';
+import { useScrollToBottom } from '@/hooks/use-scroll-to-bottom';
+
+function ChatWindow({ messages }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  
+  // Scroll to bottom whenever messages change
+  useScrollToBottom(containerRef, [messages]);
+  
+  return (
+    <div ref={containerRef} className="overflow-y-auto h-96">
+      {messages.map(msg => (
+        <div key={msg.id}>{msg.text}</div>
+      ))}
+    </div>
+  );
+}
+```
+
+### Implementation
+
+```typescript
+import { useEffect, RefObject } from "react";
+
+export function useScrollToBottom(
+  ref: RefObject<HTMLDivElement | null>,
+  deps: unknown[]
+) {
+  useEffect(() => {
+    if (ref.current) {
+      ref.current.scrollTop = ref.current.scrollHeight;
+    }
+  }, [ref, ...deps]);
+}
+```
+
+**Source:** `source/hooks/use-scroll-to-bottom.ts:8`
+
+---
+
+## useFocusOnLoad
+
+Automatically focuses an input element when loading completes. Useful for improving UX by automatically focusing form inputs after data loads.
+
+### Parameters
+
+<ParamField path="isLoading" type="boolean" required>
+  Boolean flag indicating whether the component is currently in a loading state. When this becomes `false`, the input will be focused.
+</ParamField>
+
+### Return Value
+
+<ResponseField name="ref" type="RefObject<HTMLTextAreaElement>">
+  A ref object to attach to the textarea element that should receive focus
+</ResponseField>
+
+### Usage Example
+
+```tsx
+import { useFocusOnLoad } from '@/hooks/use-focus-on-load';
+
+function CommentForm({ isSubmitting }) {
+  const textareaRef = useFocusOnLoad(isSubmitting);
+  
+  return (
+    <form>
+      <textarea 
+        ref={textareaRef}
+        placeholder="Enter your comment..."
+        rows={4}
+      />
+      <button type="submit">Submit</button>
+    </form>
+  );
+}
+```
+
+### Implementation
+
+```typescript
+import { useEffect, useRef } from "react";
+
+export function useFocusOnLoad(isLoading: boolean) {
+  const ref = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (!isLoading && ref.current) {
+      ref.current.focus();
+    }
+  }, [isLoading]);
+
+  return ref;
+}
+```
+
+**Source:** `source/hooks/use-focus-on-load.ts:3`
+
+---
+
+## Common Patterns
+
+<CardGroup cols={2}>
+  <Card title="Auto-scrolling Lists" icon="arrow-down">
+    Use `useScrollToBottom` for chat interfaces, activity feeds, or log viewers that should automatically show the latest content.
+  </Card>
+  
+  <Card title="Smart Focus Management" icon="cursor">
+    Use `useFocusOnLoad` to improve form UX by automatically focusing inputs after async operations complete.
+  </Card>
+</CardGroup>

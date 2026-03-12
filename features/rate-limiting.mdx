@@ -1,0 +1,521 @@
+---
+title: Rate Limiting
+description: Learn how rate limiting protects your application resources using @tanstack/react-pacer
+icon: shield
+---
+
+## Overview
+
+The ADK Utils Example implements robust rate limiting using `@tanstack/react-pacer` to protect application resources and ensure fair usage. This prevents abuse, manages costs, and provides a better user experience by preventing accidental spam.
+
+<CardGroup cols={2}>
+  <Card title="User Protection" icon="user-shield">
+    Prevents accidental rapid-fire message submissions
+  </Card>
+  <Card title="Resource Management" icon="server">
+    Controls API usage and reduces unnecessary costs
+  </Card>
+  <Card title="Fair Usage" icon="scale-balanced">
+    Ensures equal access for all users
+  </Card>
+  <Card title="Configurable" icon="sliders">
+    Easily adjust limits based on requirements
+  </Card>
+</CardGroup>
+
+## Implementation
+
+### Using useRateLimitedCallback
+
+The application uses TanStack Pacer's `useRateLimitedCallback` hook to wrap the message sending function:
+
+```tsx app/page.tsx
+"use client";
+
+import { useState } from "react";
+import { useRateLimitedCallback } from "@tanstack/react-pacer";
+import { useChat } from "@ai-sdk/react";
+import { DefaultChatTransport } from "ai";
+import { LIMIT, ONE_HOUR_IN_MS } from "@/lib/constants";
+
+const transport = new DefaultChatTransport({ api: "/api/genai-agent" });
+
+export default function Home() {
+  const [input, setInput] = useState("");
+  const { messages, setMessages, sendMessage, status } = useChat({ transport });
+  const isLoading = status === "streaming" || status === "submitted";
+
+  const sendUserMessage = useRateLimitedCallback(
+    (text: string, clearInput: boolean) => {
+      sendMessage({ text });
+      if (clearInput) setInput("");
+    },
+    {
+      limit: LIMIT,
+      window: ONE_HOUR_IN_MS,
+      onReject: () => {
+        alert(
+          `Rate limit exceeded. You can only send ${LIMIT} messages per hour.`,
+        );
+      },
+    },
+  );
+
+  const handleSubmit = () => {
+    if (!input.trim() || isLoading) return;
+    sendUserMessage(input, true);
+  };
+
+  const handleSuggestionClick = (text: string) => {
+    sendUserMessage(text, false);
+  };
+
+  return (
+    <div className="flex h-dvh flex-col">
+      <ChatInput
+        input={input}
+        onInputChange={setInput}
+        onSubmit={handleSubmit}
+        isLoading={isLoading}
+      />
+    </div>
+  );
+}
+```
+
+<Tip>
+  The rate-limited callback wraps the original function, ensuring all message sending (direct input and suggestion clicks) is protected.
+</Tip>
+
+## Configuration
+
+Rate limits are defined in centralized constants:
+
+```typescript lib/constants.ts
+export const LIMIT = 20;
+export const ONE_HOUR_IN_MS = 60 * 60 * 1000;
+```
+
+<Note>
+  Current configuration: **20 messages per hour** per user session.
+</Note>
+
+### Configuration Options
+
+The `useRateLimitedCallback` hook accepts the following options:
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `limit` | number | Maximum number of calls allowed within the window |
+| `window` | number | Time window in milliseconds |
+| `onReject` | function | Callback when rate limit is exceeded |
+
+## How It Works
+
+<Steps>
+  <Step title="User Action">
+    User submits a message or clicks a suggestion
+  </Step>
+  <Step title="Rate Check">
+    Pacer checks if the limit has been reached in the current time window
+  </Step>
+  <Step title="Allow or Reject">
+    If within limits, the message is sent. Otherwise, `onReject` callback fires
+  </Step>
+  <Step title="User Feedback">
+    Alert shows user-friendly message explaining the limit
+  </Step>
+</Steps>
+
+## User Experience
+
+### Within Limits
+
+When a user is within rate limits:
+
+1. Messages send instantly
+2. No visible indication of rate limiting
+3. Smooth, uninterrupted experience
+
+### Limit Exceeded
+
+When a user exceeds the rate limit:
+
+```javascript
+alert(`Rate limit exceeded. You can only send ${LIMIT} messages per hour.`);
+```
+
+<Warning>
+  The application uses browser alerts for simplicity. In production, consider using toast notifications or inline error messages for better UX.
+</Warning>
+
+## Customizing Rate Limits
+
+### Different Time Windows
+
+```typescript
+import { useRateLimitedCallback } from "@tanstack/react-pacer";
+
+// 10 messages per minute
+const sendMessage = useRateLimitedCallback(
+  handleSend,
+  {
+    limit: 10,
+    window: 60 * 1000, // 1 minute
+    onReject: () => {
+      toast.error("Please wait before sending more messages");
+    },
+  }
+);
+
+// 5 messages per 30 seconds (stricter)
+const sendMessage = useRateLimitedCallback(
+  handleSend,
+  {
+    limit: 5,
+    window: 30 * 1000,
+    onReject: () => {
+      toast.error("Rate limit: 5 messages per 30 seconds");
+    },
+  }
+);
+
+// 100 messages per day (lenient)
+const sendMessage = useRateLimitedCallback(
+  handleSend,
+  {
+    limit: 100,
+    window: 24 * 60 * 60 * 1000,
+    onReject: () => {
+      toast.error("Daily message limit reached");
+    },
+  }
+);
+```
+
+### Per-User Limits with Authentication
+
+```typescript
+import { useSession } from "next-auth/react";
+import { useRateLimitedCallback } from "@tanstack/react-pacer";
+
+export default function Chat() {
+  const { data: session } = useSession();
+  
+  // Different limits based on user tier
+  const limits = {
+    free: { limit: 20, window: 60 * 60 * 1000 },
+    pro: { limit: 100, window: 60 * 60 * 1000 },
+    enterprise: { limit: 1000, window: 60 * 60 * 1000 },
+  };
+  
+  const userTier = session?.user?.tier || "free";
+  const { limit, window } = limits[userTier];
+  
+  const sendMessage = useRateLimitedCallback(
+    handleSend,
+    {
+      limit,
+      window,
+      onReject: () => {
+        toast.error(
+          `Rate limit: ${limit} messages per hour (${userTier} tier)`
+        );
+      },
+    }
+  );
+}
+```
+
+## Advanced Patterns
+
+### Multiple Rate Limits
+
+Apply different limits to different actions:
+
+```typescript
+export default function Chat() {
+  // Limit regular messages
+  const sendMessage = useRateLimitedCallback(
+    handleSendMessage,
+    { limit: 20, window: ONE_HOUR_IN_MS }
+  );
+  
+  // Stricter limit for diagram generation (resource-intensive)
+  const generateDiagram = useRateLimitedCallback(
+    handleGenerateDiagram,
+    { limit: 5, window: ONE_HOUR_IN_MS }
+  );
+  
+  // Even stricter for code execution
+  const executeCode = useRateLimitedCallback(
+    handleExecuteCode,
+    { limit: 3, window: ONE_HOUR_IN_MS }
+  );
+}
+```
+
+### Progressive Penalties
+
+```typescript
+const [penaltyLevel, setPenaltyLevel] = useState(0);
+
+const sendMessage = useRateLimitedCallback(
+  handleSend,
+  {
+    limit: Math.max(5, 20 - penaltyLevel * 5), // Reduce limit on violations
+    window: ONE_HOUR_IN_MS,
+    onReject: () => {
+      setPenaltyLevel(prev => prev + 1);
+      toast.error(
+        `Rate limit exceeded. Limit reduced to ${20 - (penaltyLevel + 1) * 5} messages/hour`
+      );
+    },
+  }
+);
+```
+
+### Remaining Quota Display
+
+Show users how many messages they have left:
+
+```typescript
+import { usePacer } from "@tanstack/react-pacer";
+
+export default function Chat() {
+  const pacer = usePacer({
+    limit: LIMIT,
+    window: ONE_HOUR_IN_MS,
+  });
+  
+  const remaining = pacer.remaining;
+  const resetsIn = pacer.resetsIn;
+  
+  return (
+    <div>
+      <div className="text-xs text-muted-foreground">
+        {remaining} messages remaining
+        {remaining === 0 && ` (resets in ${Math.ceil(resetsIn / 60000)} minutes)`}
+      </div>
+      <ChatInput onSubmit={() => pacer.execute(handleSend)} />
+    </div>
+  );
+}
+```
+
+## Server-Side Rate Limiting
+
+For production applications, combine client-side rate limiting with server-side enforcement:
+
+```typescript app/api/genai-agent/route.ts
+import { rateLimit } from "@/lib/rate-limit";
+import { NextRequest, NextResponse } from "next/server";
+
+// Server-side rate limiter using Upstash or Redis
+const limiter = rateLimit({
+  interval: 60 * 60 * 1000, // 1 hour
+  uniqueTokenPerInterval: 500,
+});
+
+export async function POST(request: NextRequest) {
+  const ip = request.ip ?? "127.0.0.1";
+  
+  try {
+    await limiter.check(ip, 20); // 20 requests per hour
+  } catch {
+    return NextResponse.json(
+      { error: "Rate limit exceeded" },
+      { status: 429 }
+    );
+  }
+  
+  // Process request...
+}
+```
+
+<Warning>
+  Always implement server-side rate limiting in addition to client-side protection. Client-side limits can be bypassed.
+</Warning>
+
+## Benefits
+
+<CardGroup cols={2}>
+  <Card title="Cost Control" icon="dollar-sign">
+    Prevents excessive API calls to paid services (Ollama Cloud, OpenAI, etc.)
+  </Card>
+  <Card title="Better Performance" icon="gauge-high">
+    Reduces server load by limiting concurrent requests
+  </Card>
+  <Card title="Spam Prevention" icon="ban">
+    Blocks malicious actors from overwhelming the system
+  </Card>
+  <Card title="Quality Control" icon="star">
+    Encourages thoughtful queries over rapid-fire messages
+  </Card>
+  <Card title="Fair Usage" icon="users">
+    Ensures resources are distributed equally among users
+  </Card>
+  <Card title="User Education" icon="graduation-cap">
+    Clear messages help users understand system constraints
+  </Card>
+</CardGroup>
+
+## Testing Rate Limits
+
+### Manual Testing
+
+1. Open the application
+2. Send 20 messages rapidly
+3. Attempt to send the 21st message
+4. Verify the alert appears
+5. Wait for the time window to expire
+6. Confirm you can send messages again
+
+### Automated Testing
+
+```typescript __tests__/rate-limiting.test.ts
+import { renderHook, act } from "@testing-library/react";
+import { useRateLimitedCallback } from "@tanstack/react-pacer";
+
+describe("Rate Limiting", () => {
+  it("allows messages within limit", () => {
+    const mockSend = jest.fn();
+    const { result } = renderHook(() =>
+      useRateLimitedCallback(mockSend, {
+        limit: 3,
+        window: 1000,
+      })
+    );
+
+    act(() => result.current("message 1"));
+    act(() => result.current("message 2"));
+    act(() => result.current("message 3"));
+
+    expect(mockSend).toHaveBeenCalledTimes(3);
+  });
+
+  it("rejects messages exceeding limit", () => {
+    const mockSend = jest.fn();
+    const mockReject = jest.fn();
+    
+    const { result } = renderHook(() =>
+      useRateLimitedCallback(mockSend, {
+        limit: 2,
+        window: 1000,
+        onReject: mockReject,
+      })
+    );
+
+    act(() => result.current("message 1"));
+    act(() => result.current("message 2"));
+    act(() => result.current("message 3"));
+
+    expect(mockSend).toHaveBeenCalledTimes(2);
+    expect(mockReject).toHaveBeenCalledTimes(1);
+  });
+});
+```
+
+## Monitoring and Analytics
+
+Track rate limit violations to optimize your limits:
+
+```typescript
+import { analytics } from "@/lib/analytics";
+
+const sendMessage = useRateLimitedCallback(
+  handleSend,
+  {
+    limit: LIMIT,
+    window: ONE_HOUR_IN_MS,
+    onReject: () => {
+      // Track violation
+      analytics.track("rate_limit_exceeded", {
+        limit: LIMIT,
+        window: ONE_HOUR_IN_MS,
+        timestamp: Date.now(),
+      });
+      
+      // Show user feedback
+      toast.error(`Rate limit exceeded: ${LIMIT} messages per hour`);
+    },
+  }
+);
+```
+
+## Best Practices
+
+1. **Set Reasonable Limits**: Balance protection with user experience
+2. **Provide Clear Feedback**: Explain limits and when they reset
+3. **Differentiate Users**: Offer higher limits for authenticated/premium users
+4. **Server-Side Enforcement**: Never rely solely on client-side limits
+5. **Monitor Violations**: Track when limits are hit to adjust accordingly
+6. **Graceful Degradation**: Provide alternatives when limits are reached
+7. **Document Limits**: Make rate limits visible in documentation
+
+## Troubleshooting
+
+### Limits Not Working
+
+<Note>
+  Ensure `@tanstack/react-pacer` is properly installed: `npm install @tanstack/react-pacer`
+</Note>
+
+### Limits Too Strict
+
+```typescript
+// Temporarily increase limits for testing
+const LIMIT = process.env.NODE_ENV === "development" ? 1000 : 20;
+```
+
+### User Confusion
+
+Replace alerts with better UX:
+
+```typescript
+import { toast } from "sonner";
+
+onReject: () => {
+  toast.error("Rate limit exceeded", {
+    description: `You can send ${LIMIT} messages per hour. Try again later.`,
+    action: {
+      label: "Learn More",
+      onClick: () => router.push("/docs/rate-limits"),
+    },
+  });
+}
+```
+
+## Dependencies
+
+The rate limiting feature requires:
+
+```json package.json
+{
+  "dependencies": {
+    "@tanstack/pacer": "^0.18.0",
+    "@tanstack/react-pacer": "^0.19.4"
+  }
+}
+```
+
+<Tip>
+  TanStack Pacer is a lightweight, framework-agnostic rate limiting library with excellent TypeScript support.
+</Tip>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Chat UI" icon="message-square" href="/features/chat-ui">
+    Learn about the chat interface implementation
+  </Card>
+  <Card title="Agent Tools" icon="wrench" href="/features/agent-tools">
+    Explore agent capabilities
+  </Card>
+  <Card title="TanStack Pacer Docs" icon="book-open" href="https://tanstack.com/pacer">
+    Official TanStack Pacer documentation
+  </Card>
+  <Card title="Configuration" icon="gear" href="/development/configuration">
+    Learn how to configure rate limits
+  </Card>
+</CardGroup>

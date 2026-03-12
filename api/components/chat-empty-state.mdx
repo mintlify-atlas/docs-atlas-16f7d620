@@ -1,0 +1,182 @@
+---
+title: ChatEmptyState
+description: The initial state component displayed when no messages exist, featuring branding and suggested prompts.
+---
+
+## Overview
+
+The `ChatEmptyState` component displays when the chat conversation is empty. It provides a welcoming introduction to the ADK Utils package, shows the agent branding, and presents interactive suggestion cards that users can click to start a conversation with pre-defined prompts.
+
+## Props
+
+<ParamField path="onSuggestionClick" type="(text: string) => void" required>
+  Callback function triggered when a user clicks one of the suggestion cards. Receives the prompt text as an argument that should be used to initiate the conversation.
+</ParamField>
+
+## TypeScript Interface
+
+```typescript
+interface ChatEmptyStateProps {
+  onSuggestionClick: (text: string) => void;
+}
+```
+
+## Usage
+
+```typescript
+import { ChatEmptyState } from "@/components/chat-empty-state";
+import { useState } from "react";
+
+function ChatApp() {
+  const [messages, setMessages] = useState([]);
+  const [input, setInput] = useState("");
+
+  const handleSuggestionClick = (text: string) => {
+    setInput(text);
+    // Optionally auto-submit:
+    // handleSubmit(text);
+  };
+
+  return (
+    <div>
+      {messages.length === 0 ? (
+        <ChatEmptyState onSuggestionClick={handleSuggestionClick} />
+      ) : (
+        // Render messages
+        <MessageList messages={messages} />
+      )}
+    </div>
+  );
+}
+```
+
+## Features
+
+### Branding Section
+
+- **Bot Icon**: Large (16x16) bot icon in an accent-colored circular container
+- **Title Text**: Introduces the @yagolopez/adk-utils npm package with clickable link
+- **Subtitle**: "Some prompt examples:" to introduce suggestion cards
+- **Centered Layout**: Vertically and horizontally centered for visual balance
+
+### Suggestion Cards
+
+The component displays suggestion cards in a responsive grid:
+- **Mobile**: Single column
+- **Desktop**: 3-column grid
+- **Max Width**: 28rem (448px) for optimal readability
+
+Each card includes:
+- Icon (from Lucide icons library)
+- Label (short title)
+- Prompt preview (truncated to 2 lines)
+- Tooltip with additional information
+- Hover effects (border color change, background color change)
+
+### Suggestions Data
+
+Suggestions are imported from `@/lib/constants`:
+
+```typescript
+import { suggestions } from "@/lib/constants";
+
+// Example suggestion structure:
+// [
+//   {
+//     label: "Weather",
+//     prompt: "What's the weather like today?",
+//     icon: Cloud,
+//     info: "Ask about current weather conditions"
+//   },
+//   ...
+// ]
+```
+
+## Visual Design
+
+### Layout Structure
+
+```
+┌─────────────────────────────────┐
+│                                 │
+│         🤖 Bot Icon            │
+│                                 │
+│    Demonstration of...         │
+│    Some prompt examples:       │
+│                                 │
+│  ┌──────┐ ┌──────┐ ┌──────┐   │
+│  │ Card │ │ Card │ │ Card │   │
+│  │  #1  │ │  #2  │ │  #3  │   │
+│  └──────┘ └──────┘ └──────┘   │
+│                                 │
+└─────────────────────────────────┘
+```
+
+### Spacing
+
+- Main container: `flex-1` with centered content
+- Gap between sections: 2rem (32px)
+- Gap between cards: 0.75rem (12px)
+- Card padding: 1rem (16px)
+
+### Colors
+
+- Bot icon container: `bg-accent/10` with `ring-accent/20`
+- Card background: `bg-card`
+- Card borders: `border-border`
+- Hover state: `border-accent/50` and `bg-muted`
+- Link color: `text-accent`
+
+## Interactive Behavior
+
+### Card Click
+
+1. User clicks a suggestion card
+2. `onSuggestionClick` is called with the prompt text
+3. Parent component typically:
+   - Sets the input value to the prompt
+   - Optionally auto-submits the message
+   - Scrolls to input field
+
+### Tooltips
+
+Each card has a tooltip that appears on hover:
+- Position: Bottom
+- Content: Additional info about the suggestion
+- Provided by `@/components/ui/tooltip`
+
+## Accessibility
+
+- Semantic HTML: Uses `<button>` for interactive cards
+- External link attributes: `target="_blank" rel="noopener noreferrer"`
+- Hover states: Clear visual feedback
+- Focus states: Inherited from UI components
+
+## Responsive Design
+
+```css
+/* Mobile (< 640px) */
+.grid-cols-1
+
+/* Desktop (≥ 640px) */
+.sm:grid-cols-3
+```
+
+### Text Clamping
+
+Prompt preview text uses `line-clamp-2` to truncate long prompts to 2 lines, maintaining card height consistency.
+
+## Related Components
+
+<CardGroup cols={2}>
+  <Card title="ChatHeader" href="/api/components/chat-header">
+    Header with similar suggestion functionality
+  </Card>
+  <Card title="ChatInput" href="/api/components/chat-input">
+    Input component to receive suggestion text
+  </Card>
+</CardGroup>
+
+## Source Code
+
+View the source code on [GitHub](https://github.com/YagoLopez/adk-utils-example/blob/main/components/chat-empty-state.tsx)

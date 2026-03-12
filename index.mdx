@@ -1,97 +1,154 @@
 ---
-title: "Introduction"
-description: "Welcome to the new home for your documentation"
+title: ADK Utils Example
+description: A modern Next.js chat application demonstrating Google ADK integration with custom utilities for Ollama models.
 ---
 
-## Setting up
+<div style={{
+  background: 'linear-gradient(135deg, #4187f4 0%, #9cc4fb 100%)',
+  borderRadius: '12px',
+  padding: '48px 32px',
+  textAlign: 'center',
+  marginBottom: '32px',
+  color: 'white'
+}}>
+  <h1 style={{
+    fontSize: '36px',
+    fontWeight: '700',
+    marginBottom: '16px',
+    color: 'white'
+  }}>
+    ADK Utils Example
+  </h1>
+  <p style={{
+    fontSize: '18px',
+    marginBottom: '32px',
+    opacity: '0.95',
+    maxWidth: '600px',
+    margin: '0 auto 32px'
+  }}>
+    Build powerful AI chat applications with Google ADK, Next.js 16, and custom Ollama model support.
+  </p>
+  <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap' }}>
+    <a href="/quickstart" style={{
+      background: 'rgba(255, 255, 255, 0.2)',
+      border: '1px solid rgba(255, 255, 255, 0.3)',
+      color: 'white',
+      padding: '12px 24px',
+      borderRadius: '8px',
+      textDecoration: 'none',
+      fontWeight: '600',
+      backdropFilter: 'blur(10px)',
+      transition: 'all 0.2s'
+    }}>
+      Get Started →
+    </a>
+    <a href="https://github.com/YagoLopez/adk-utils-example" style={{
+      background: 'rgba(255, 255, 255, 0.9)',
+      color: '#4187f4',
+      padding: '12px 24px',
+      borderRadius: '8px',
+      textDecoration: 'none',
+      fontWeight: '600',
+      transition: 'all 0.2s'
+    }}>
+      View on GitHub
+    </a>
+  </div>
+</div>
 
-Get your documentation site up and running in minutes.
+## What is ADK Utils Example?
 
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Follow our three step quickstart guide.
-</Card>
+ADK Utils Example is a production-ready chat application that demonstrates how to integrate [Google Agent Development Kit (ADK)](https://github.com/google/adk) with Next.js 16 and React 19. It showcases the power of [`@yagolopez/adk-utils`](https://www.npmjs.com/package/@yagolopez/adk-utils), a utility package that extends ADK with Ollama model support and service helpers.
 
-## Make it yours
-
-Design a docs site that looks great and empowers your users.
-
-<Columns cols={2}>
-  <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
-  >
-    Edit your docs locally and preview them in real time.
+<CardGroup cols={2}>
+  <Card title="Quick Start" icon="rocket" href="/quickstart">
+    Get your chat app running in under 5 minutes
   </Card>
-  <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
-  >
-    Customize the design and colors of your site to match your brand.
+  <Card title="Installation" icon="download" href="/installation">
+    Step-by-step installation and setup guide
   </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
+  <Card title="Agent Tools" icon="wrench" href="/features/agent-tools">
+    Explore built-in tools for time, diagrams, and code
   </Card>
-  <Card
-    title="API documentation"
-    icon="terminal"
-    href="/api-reference/introduction"
-  >
-    Auto-generate API documentation from OpenAPI specifications.
+  <Card title="API Reference" icon="code" href="/api/routes/genai-agent">
+    Complete API documentation for all components
   </Card>
-</Columns>
+</CardGroup>
 
-## Create beautiful pages
+## Key Features
 
-Everything you need to create world-class documentation.
+<CardGroup cols={3}>
+  <Card title="Google ADK Integration" icon="brain">
+    Build AI agents with Google's official Agent Development Kit and custom Ollama model support
+  </Card>
+  <Card title="Modern Stack" icon="layer-group">
+    Next.js 16, React 19, TypeScript, and Tailwind CSS 4 for cutting-edge development
+  </Card>
+  <Card title="Streaming Responses" icon="stream">
+    Real-time streaming responses with markdown rendering and syntax highlighting
+  </Card>
+  <Card title="Mermaid Diagrams" icon="diagram-project">
+    Generate flowcharts, sequence diagrams, and more with built-in Mermaid.js support
+  </Card>
+  <Card title="Rate Limiting" icon="shield">
+    Built-in rate limiting with @tanstack/react-pacer to protect your resources
+  </Card>
+  <Card title="Custom Tools" icon="screwdriver-wrench">
+    Extensible agent tools for time retrieval, code viewing, and diagram creation
+  </Card>
+</CardGroup>
 
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
-  </Card>
-  <Card
-    title="Code samples"
-    icon="code"
-    href="/essentials/code"
-  >
-    Add sample code to demonstrate how to use your product.
-  </Card>
-  <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
-  >
-    Display images and other media.
-  </Card>
-  <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
-  >
-    Write once and reuse across your docs.
-  </Card>
-</Columns>
+## Tech Stack
 
-## Need inspiration?
+This project leverages modern technologies to deliver a high-performance chat experience:
 
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
+- **Framework**: [Next.js 16](https://nextjs.org/) with App Router and React 19
+- **AI Core**: [@google/adk](https://github.com/google/adk) for agent orchestration
+- **Utilities**: [@yagolopez/adk-utils](https://www.npmjs.com/package/@yagolopez/adk-utils) for Ollama integration
+- **AI SDK**: [Vercel AI SDK](https://sdk.vercel.ai/) for streaming and UI components
+- **Styling**: [Tailwind CSS 4](https://tailwindcss.com/) with modern design patterns
+- **Markdown**: [Streamdown](https://github.com/streamdown/streamdown) for rich content rendering
+- **State Management**: React Hooks + [TanStack Pacer](https://tanstack.com/pacer) for rate limiting
+
+## Quick Example
+
+Here's how simple it is to create an AI agent with custom tools:
+
+```typescript app/agents/agent1.ts
+import { FunctionTool, LlmAgent } from "@google/adk";
+import { OllamaModel } from "@yagolopez/adk-utils";
+import { z } from "zod";
+
+// Define a custom tool
+const getCurrentTime = new FunctionTool({
+  name: "get_current_time",
+  description: "Returns the current time in a specified city.",
+  parameters: z.object({
+    city: z.string().describe("The name of the city"),
+  }),
+  execute: ({ city }) => ({
+    status: "success",
+    report: `The current time in ${city} is ${new Date().toLocaleTimeString()}`,
+  }),
+});
+
+// Create an agent with Ollama model
+export const rootAgent = new LlmAgent({
+  name: "agent1",
+  model: new OllamaModel("gpt-oss:120b-cloud", "https://ollama.com"),
+  description: "Agent with custom tools for time and diagrams",
+  instruction: "You are a helpful assistant.",
+  tools: [getCurrentTime],
+});
+```
+
+## Ready to Build?
+
+<CardGroup cols={2}>
+  <Card title="Quickstart Guide" icon="play" href="/quickstart">
+    Follow our quickstart to get your chat app running
+  </Card>
+  <Card title="Architecture Deep Dive" icon="sitemap" href="/architecture/request-flow">
+    Learn how the application processes requests
+  </Card>
+</CardGroup>

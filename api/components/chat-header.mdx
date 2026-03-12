@@ -1,0 +1,95 @@
+---
+title: ChatHeader
+description: A header component that displays the chat agent branding, message count, and quick action suggestions.
+---
+
+## Overview
+
+The `ChatHeader` component serves as the top navigation bar for the chat interface. It displays the agent branding, provides quick action buttons when messages exist, and shows the current message count. The header is interactive, allowing users to reset the conversation or trigger suggested prompts.
+
+## Props
+
+<ParamField path="messageCount" type="number" required>
+  The total number of messages in the current conversation. Used to conditionally show/hide UI elements and enable/disable the reset functionality.
+</ParamField>
+
+<ParamField path="onSuggestionClick" type="(text: string) => void" required>
+  Callback function triggered when a user clicks one of the suggestion buttons. Receives the prompt text as an argument.
+</ParamField>
+
+<ParamField path="onReset" type="() => void" required>
+  Callback function triggered when the user clicks the reset button (agent branding area). Resets the conversation to its initial state.
+</ParamField>
+
+## TypeScript Interface
+
+```typescript
+interface ChatHeaderProps {
+  messageCount: number;
+  onSuggestionClick: (text: string) => void;
+  onReset: () => void;
+}
+```
+
+## Usage
+
+```typescript
+import { ChatHeader } from "@/components/chat-header";
+import { suggestions } from "@/lib/constants";
+
+function ChatApp() {
+  const [messages, setMessages] = useState([]);
+
+  const handleSuggestionClick = (text: string) => {
+    // Handle suggestion click
+    console.log("Suggestion clicked:", text);
+  };
+
+  const handleReset = () => {
+    setMessages([]);
+  };
+
+  return (
+    <ChatHeader
+      messageCount={messages.length}
+      onSuggestionClick={handleSuggestionClick}
+      onReset={handleReset}
+    />
+  );
+}
+```
+
+## Features
+
+- **Responsive Design**: Suggestions are centered on larger screens and aligned on mobile
+- **Conditional Rendering**: Suggestion buttons and message count only appear when messages exist
+- **Interactive Reset**: Clicking the agent branding area resets the conversation
+- **Tooltip Support**: Each suggestion button displays helpful tooltip information
+- **Icon Integration**: Uses Lucide icons for visual clarity
+
+## Visual States
+
+### Empty State (No Messages)
+- Shows only the agent branding (Bot icon + "ADK Agent" title)
+- Reset functionality is disabled
+- No suggestion buttons or message count displayed
+
+### Active State (With Messages)
+- Agent branding becomes clickable with hover effects
+- Suggestion buttons appear in the center (desktop) or near the branding (mobile)
+- Message count badge displays in the top-right corner
+
+## Related Components
+
+<CardGroup cols={2}>
+  <Card title="ChatEmptyState" href="/api/components/chat-empty-state">
+    Initial state with suggestion prompts
+  </Card>
+  <Card title="ChatInput" href="/api/components/chat-input">
+    Input component with reset functionality
+  </Card>
+</CardGroup>
+
+## Source Code
+
+View the source code on [GitHub](https://github.com/YagoLopez/adk-utils-example/blob/main/components/chat-header.tsx)
