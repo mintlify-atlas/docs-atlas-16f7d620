@@ -1,0 +1,109 @@
+{
+  "projectType": "frontend",
+  "projectName": "ADK Utils Example",
+  "projectDescription": "A modern Next.js chat application demonstrating Google ADK integration with custom utilities for Ollama models.",
+  "theme": "palm",
+  "primaryColor": "#4187f4",
+  "lightColor": "#9cc4fb",
+  "darkColor": null,
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "installation"
+            ]
+          },
+          {
+            "group": "Features",
+            "pages": [
+              "features/chat-ui",
+              "features/agent-tools",
+              "features/mermaid-diagrams",
+              "features/rate-limiting"
+            ]
+          },
+          {
+            "group": "Architecture",
+            "pages": [
+              "architecture/project-structure",
+              "architecture/request-flow"
+            ]
+          },
+          {
+            "group": "Development",
+            "pages": [
+              "development/running-locally",
+              "development/testing",
+              "development/configuration"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Components",
+            "pages": [
+              "api/components/chat-header",
+              "api/components/chat-input",
+              "api/components/chat-message",
+              "api/components/chat-empty-state",
+              "api/components/chat-typing-indicator"
+            ]
+          },
+          {
+            "group": "Agents",
+            "pages": [
+              "api/agents/root-agent",
+              "api/agents/tools"
+            ]
+          },
+          {
+            "group": "API Routes",
+            "pages": [
+              "api/routes/genai-agent"
+            ]
+          },
+          {
+            "group": "Utilities",
+            "pages": [
+              "api/utilities/hooks",
+              "api/utilities/constants"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Google ADK integration with custom Ollama model support via @yagolopez/adk-utils",
+    "Modern chat UI with streaming responses and markdown rendering",
+    "Mermaid.js diagram generation for visual representations",
+    "Built-in agent tools for time retrieval and code visualization",
+    "Rate limiting with @tanstack/react-pacer",
+    "Next.js 16 with React 19 and App Router"
+  ],
+  "publicApiSurface": [
+    "POST /api/genai-agent - Main agent communication endpoint",
+    "rootAgent - Primary ADK agent with tools",
+    "OllamaModel - Custom model from @yagolopez/adk-utils",
+    "GenAIAgentService - Service utility from @yagolopez/adk-utils",
+    "getCurrentTime - Tool for retrieving city time",
+    "createMermaidDiagram - Tool for generating diagrams",
+    "viewSourceCode - Tool for displaying source code",
+    "ChatHeader - Header component",
+    "ChatInput - Input component with rate limiting",
+    "ChatMessage - Message display component",
+    "ChatEmptyState - Empty state component",
+    "ChatTypingIndicator - Typing indicator component",
+    "useScrollToBottom - Auto-scroll hook",
+    "useFocusOnLoad - Focus management hook"
+  ]
+}
